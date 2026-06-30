@@ -2,30 +2,21 @@ import { useState } from "react";
 
 const slides = [
   {
-    url: "https://www.telecomarmenia.am/images/advanced_slider/2/17786566223832.png",
-    title: "Արի՛ Team Place՝ քո արտոնությունների հետևից",
-    subtitle: "",
-    btn: "Ավելին",
+    url: "https://www.telecomarmenia.am/images/advanced_slider/2/17817016265264.jpeg",
   },
   {
-    url: "https://www.telecomarmenia.am/images/advanced_slider/2/17784978911155.jpeg",
-    title: "",
-    subtitle: "",
-    btn: "",
+    url: "https://www.telecomarmenia.am/images/advanced_slider/2/17815293313539.jpeg",
   },
   {
-    url: "https://www.telecomarmenia.am/images/advanced_slider/2/17760603211125.png",
-    title: "Կոսմո 4՝ հատուկ զեղչով",
-    subtitle: "Տունը այնտեղ է, որտեղ միասին ենք",
-    btn: "Դիտել",
+    url: "https://www.telecomarmenia.am/images/advanced_slider/2/17797054143953.jpeg",
   },
 ];
 
-export default function HeroSlider() {
+export default function EshopSlider() {
   const [current, setCurrent] = useState(0);
 
   return (
-    <div className="relative w-full h-[300px] md:h-[450px] lg:h-[550px] overflow-hidden bg-black mt-4">
+    <div className="relative w-full h-[300px] md:h-[450px] lg:h-[550px] overflow-hidden bg-black">
       
       {slides.map((slide, index) => (
         <div
@@ -36,27 +27,24 @@ export default function HeroSlider() {
         >
           <img
             src={slide.url}
-            alt="slide"
+            alt="eshop slide"
             className="w-full h-full object-contain bg-black"
           />
 
-          {slide.title && (
-            <div className="absolute inset-0 bg-black/40 flex flex-col justify-center px-10 md:px-20 text-white space-y-4">
-              <h1 className="text-3xl md:text-5xl font-black uppercase">
-                {slide.title}
-              </h1>
+          {/* Overlay */}
+          <div className="absolute inset-0 bg-black/40 flex flex-col justify-center px-10 md:px-20 text-white space-y-4">
+            <h1 className="text-3xl md:text-5xl font-black uppercase">
+              {slide.title}
+            </h1>
 
-              {slide.subtitle && (
-                <p className="text-lg md:text-xl">{slide.subtitle}</p>
-              )}
+            <p className="text-lg md:text-xl">
+              {slide.subtitle}
+            </p>
 
-              {slide.btn && (
-                <button className="bg-[#E54B24] w-fit px-8 py-3 rounded-full font-bold hover:bg-orange-700 transition">
-                  {slide.btn}
-                </button>
-              )}
-            </div>
-          )}
+            <button className="bg-[#E54B24] w-fit px-8 py-3 rounded-full font-bold hover:bg-orange-700 transition">
+              {slide.btn}
+            </button>
+          </div>
         </div>
       ))}
 
