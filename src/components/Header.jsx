@@ -1,130 +1,52 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
 
 export default function Header() {
-  const [isOpen, setIsOpen] = useState(false);
-
   return (
-    <header className="w-full bg-white shadow-md font-sans">
-      <div className="bg-blue-900 text-xs py-2 px-4 flex justify-between items-center">
-        <div className="flex gap-4 text-white">
-          <Link to="/" className="font-bold cursor-pointer">
-            Անհատական
-          </Link>
-
-          <span className="cursor-pointer">Բիզնես</span>
-
-          <Link to="/eshop" className="cursor-pointer">
-            🛒 E-shop
+    <header className="w-full font-sans">
+      <div className="bg-[#003853] text-white text-[13px] h-[36px] flex items-center justify-between px-[10%]">
+        <div className="flex h-full">
+          <Link to="/" className="flex items-center px-4 hover:bg-[#002d44]">Անհատներին</Link>
+          <Link to="/business" className="flex items-center px-4 bg-[#002d44] h-full">Բիզնես</Link>
+          <Link to="/eshop" className="flex items-center px-4 hover:bg-[#002d44] gap-2">
+            <span>🛒</span> E-shop
           </Link>
         </div>
 
-        <div className="flex items-center gap-3 text-white text-[11px]">
-          <span className="cursor-pointer">Հայ</span>
-          <span className="cursor-pointer">Рус</span>
-          <span className="cursor-pointer">Eng</span>
-
-          <span className="text-gray-300">|</span>
-
-          <Link
-            to="/login"
-            className="font-semibold hover:text-red-400 transition"
-          >
-            Անձնական գրասենյակ
+        <div className="flex items-center h-full">
+          <div className="px-3 cursor-pointer hover:text-gray-300">
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          </div>
+          <span className="text-[#005a75]">|</span>
+          <Link to="#" className="px-3 text-[#ff6a6a]">Հայ</Link>
+          <span className="text-[#005a75]">|</span>
+          <Link to="#" className="px-3 hover:text-gray-300">Рус</Link>
+          <span className="text-[#005a75]">|</span>
+          <Link to="#" className="px-3 hover:text-gray-300">Eng</Link>
+          <span className="text-[#005a75] px-3">|</span>
+          <Link to="/login" className="flex items-center pr-4 gap-2 hover:text-gray-300">
+            <span>👤</span> Անձնական գրասենյակ
           </Link>
         </div>
       </div>
 
-      <div className="bg-white text-black px-4 md:px-12 py-4 flex justify-between items-center shadow-md">
-        {/* Logo */}
-        <div className="flex items-center">
-          <img
-            src="https://www.telecomarmenia.am/img/logo-light.svg?v=1"
-            alt="Team Telecom Armenia"
-            className="h-10 md:h-12 object-contain"
-          />
-        </div>
+      <div className="bg-white h-[80px] flex items-center justify-between px-[10%] border-b border-gray-200">
+        <Link to="/" className="mr-auto">
+          <img src="https://www.telecomarmenia.am/img/fb-share.png?v=2" alt="Team Telecom" className="h-[55px] w-auto" />
+        </Link>
 
-        {/* Desktop menu */}
-        <nav className="hidden lg:flex gap-6 font-medium text-sm text-gray-700">
-          <a href="#" className="hover:text-red-500 transition">
-            Սակագներ
-          </a>
-          <a href="#" className="hover:text-red-500 transition">
-            Ինտերնետ
-          </a>
-          <a href="#" className="hover:text-red-500 transition">
-            Ծառայություններ
-          </a>
-          <a href="#" className="hover:text-red-500 transition">
-            Ռոումինգ
-          </a>
-          <a href="#" className="hover:text-red-500 transition">
-            Առաջարկներ
-          </a>
-          <a href="#" className="hover:text-red-500 transition">
-            Օգնություն
-          </a>
+        <nav className="flex items-center h-full">
+          <Link to="/tariffs" className="px-6 text-[#444] text-[14px] hover:text-[#003853]">Սակագներ</Link>
+          <Link to="/internet" className="px-6 text-[#444] text-[14px] hover:text-[#003853]">Ինտերնետ</Link>
+          <Link to="/services" className="px-6 text-[#444] text-[14px] hover:text-[#003853]">Ծառայություններ</Link>
+          <Link to="/roaming" className="px-6 text-[#444] text-[14px] hover:text-[#003853]">Ռոումինգ և Միջազգային կապ</Link>
+          <Link to="/business-solutions" className="px-6 text-[#444] text-[14px] hover:text-[#003853]">Բիզնես լուծումներ</Link>
+          <Link to="/support" className="px-6 text-[#444] text-[14px] hover:text-[#003853]">Օգնություն</Link>
         </nav>
 
-        {/* Right side */}
-        <div className="flex items-center gap-4">
-          <button className="hidden md:block bg-[#004B87] hover:bg-[#003560] text-white p-2.5 rounded transition">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-              />
-            </svg>
-          </button>
-
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden text-2xl"
-          >
-            {isOpen ? "✕" : "☰"}
-          </button>
-        </div>
+        <Link to="/payment" className="bg-[#79cdd7] h-full w-[80px] flex items-center justify-center ml-auto">
+          <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="#003853" strokeWidth="1.5"><rect x="3" y="7" width="18" height="12" rx="2"/><path d="M3 11h18"/></svg>
+        </Link>
       </div>
-
-      {/* Mobile menu */}
-      {isOpen && (
-        <div className="md:hidden bg-white border-t border-gray-200 py-4 px-6 flex flex-col gap-4 shadow-inner">
-          <a href="#" className="text-gray-700 hover:text-orange-500 py-2">
-            Սակագներ
-          </a>
-          <a href="#" className="text-gray-700 hover:text-orange-500 py-2">
-            Ինտերնետ
-          </a>
-          <a href="#" className="text-gray-700 hover:text-orange-500 py-2">
-            Ծառայություններ
-          </a>
-          <a href="#" className="text-gray-700 hover:text-orange-500 py-2">
-            Ռոումինգ
-          </a>
-          <a href="#" className="text-gray-700 hover:text-orange-500 py-2">
-            Առաջարկներ
-          </a>
-          <a href="#" className="text-gray-700 hover:text-orange-500 py-2">
-            Օգնություն
-          </a>
-
-          <Link
-            to="/login"
-            className="bg-red-500 text-white w-full py-2.5 rounded-xl font-medium mt-2 text-center"
-          >
-            Անձնական գրասենյակ
-          </Link>
-        </div>
-      )}
     </header>
   );
 }

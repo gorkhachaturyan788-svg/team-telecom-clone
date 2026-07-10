@@ -5,7 +5,6 @@ import "swiper/css/navigation";
 import "swiper/css/pagination";
 
 export default function NewsSection() {
-  // Բաժանված է 2 սլայդի՝ յուրաքանչյուրում 3 նորություն
   const slides = [
     [
       { date: "14 May", title: "Տելեգրաֆից մինչև 5G. կապի թանգարանը միանում է «Թանգարանների գիշերվան»", img: "https://www.telecomarmenia.am/images/news/1/17787646383268/450x250c-center.png" },

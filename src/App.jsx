@@ -7,6 +7,8 @@ import Login from "./components/Login";
 
 import Home from "./pages/Home";
 import Eshop from "./pages/Eshop";
+import Business from "./pages/Business";
+import BillPaymentForm from "./components/BillPaymentForm";
 
 import TeamTV from "./pages/TeamTV";
 import MyTeam from "./pages/MyTeam";
@@ -15,8 +17,6 @@ import TeamEnergy from "./pages/TeamEnergy";
 
 function Layout() {
   const location = useLocation();
-
-  // Թաքցնում է Header-ն ու Footer-ը login էջում
   const hideLayout = location.pathname === "/login";
 
   return (
@@ -25,13 +25,14 @@ function Layout() {
 
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/business" element={<Business />} />
         <Route path="/eshop" element={<Eshop />} />
         <Route path="/login" element={<Login />} />
-
         <Route path="/teamtv" element={<TeamTV />} />
         <Route path="/my-team" element={<MyTeam />} />
         <Route path="/teampay" element={<TeamPay />} />
         <Route path="/team-energy" element={<TeamEnergy />} />
+        <Route path="/payment" element={<BillPaymentForm />} />
       </Routes>
 
       {!hideLayout && <Footer />}
