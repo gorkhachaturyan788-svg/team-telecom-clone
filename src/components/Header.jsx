@@ -22,9 +22,9 @@ export default function Header() {
           <Link to="#" className="px-3 hover:text-gray-300">Рус</Link>
           <span className="text-[#005a75]">|</span>
           <Link to="#" className="px-3 hover:text-gray-300">Eng</Link>
-          <span className="text-[#005a75] px-3">|</span>
+          <span classname ="text-[#005a75] px-3">|</span>
           <Link to="/login" className="flex items-center pr-4 gap-2 hover:text-gray-300">
-            <span>👤</span> Անձնական գրասենյակ
+            <span>👤</span> Անձնական գրասենյակ 
           </Link>
         </div>
       </div>
@@ -34,7 +34,7 @@ export default function Header() {
           <img src="https://www.telecomarmenia.am/img/fb-share.png?v=2" alt="Team Telecom" className="h-[55px] w-auto" />
         </Link>
 
-        <nav className="flex items-center h-full">
+      <nav className="flex items-center h-full">
           <Link to="/tariffs" className="px-6 text-[#444] text-[14px] hover:text-[#003853]">Սակագներ</Link>
           <Link to="/internet" className="px-6 text-[#444] text-[14px] hover:text-[#003853]">Ինտերնետ</Link>
           <Link to="/services" className="px-6 text-[#444] text-[14px] hover:text-[#003853]">Ծառայություններ</Link>
