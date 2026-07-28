@@ -32,26 +32,24 @@ export default function BusinessSlider() {
   const prevSlide = () => setCurrent((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
 
   return (
-    <section className="w-full bg-[#003853] py-20 px-[10%] text-white relative flex items-center">
-      {/* Ձախ սլաք */}
-      <button onClick={prevSlide} className="text-5xl px-4 hover:text-gray-400 z-10">❮</button>
+    <section className="w-full bg-[#003853] py-20 px-[5%] max-[550px]:px-4 text-white relative flex items-center">
+      <button onClick={prevSlide} className="text-3xl md:text-5xl px-1 md:px-4 hover:text-gray-400 z-10 shrink-0">❮</button>
 
-      <div className="flex w-full items-center justify-around transition-opacity duration-500">
-        <div className="max-w-[40%] space-y-6">
-          <h1 className="text-6xl font-bold tracking-tight">{slides[current].title}</h1>
+      <div className="flex flex-col md:flex-row w-full items-center justify-around gap-8 md:gap-4 transition-opacity duration-500">
+        <div className="w-full md:max-w-[40%] space-y-6 text-center md:text-left flex flex-col items-center md:items-start">
+          <h1 className="text-4xl max-[550px]:text-3xl md:text-6xl font-bold tracking-tight">{slides[current].title}</h1>
           
-          {/* Այստեղ ստուգում ենք թե ինչ ցուցադրենք */}
           {slides[current].items ? (
-            <ul className="space-y-3 text-2xl font-medium">
+            <ul className="space-y-3 text-lg md:text-2xl font-medium inline-block text-left">
               {slides[current].items.map((item, index) => (
                 <li key={index} className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-white rounded-full"></span>
+                  <span className="w-2 h-2 bg-white rounded-full shrink-0"></span>
                   {item}
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-3xl font-medium leading-tight">{slides[current].text}</p>
+            <p className="text-xl md:text-3xl font-medium leading-tight">{slides[current].text}</p>
           )}
 
           <Link to="#" className="inline-block bg-white text-[#ff5a5f] px-12 py-3 rounded-full font-bold mt-6 hover:bg-gray-100 transition">
@@ -59,15 +57,13 @@ export default function BusinessSlider() {
           </Link>
         </div>
 
-        <div className="w-[40%]">
-          <img src={slides[current].img} alt="Slider" className="w-full h-auto" />
+        <div className="w-full md:w-[40%] flex justify-center">
+          <img src={slides[current].img} alt="Slider" className="w-full max-w-[300px] md:max-w-none h-auto object-contain" />
         </div>
       </div>
 
-      {/* Աջ սլաք */}
-      <button onClick={nextSlide} className="text-5xl px-4 hover:text-gray-400 z-10">❯</button>
+      <button onClick={nextSlide} className="text-3xl md:text-5xl px-1 md:px-4 hover:text-gray-400 z-10 shrink-0">❯</button>
 
-      {/* Ներքևի կետիկներ */}
       <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-2">
         {slides.map((_, index) => (
           <div key={index} className={`w-3 h-3 rounded-full ${current === index ? 'bg-red-500' : 'bg-white'}`}></div>

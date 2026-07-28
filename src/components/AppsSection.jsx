@@ -6,7 +6,7 @@ export default function AppsSection() {
       <h2 className="text-3xl font-bold text-gray-800 mb-10">Այլ հավելվածներ</h2>
       
       <div className="grid md:grid-cols-2 gap-8">
-        <div className="flex items-start gap-6 p-6">
+        <div className="flex flex-col max-[550px]:items-center max-[550px]:text-center md:flex-row items-start gap-6 p-6">
           <img 
             src="https://www.telecomarmenia.am/images/team_apps/1/17691688001842.png" 
             alt="TeamTV" 
@@ -23,7 +23,7 @@ export default function AppsSection() {
           </div>
         </div>
 
-        <div className="flex items-start gap-6 p-6">
+        <div className="flex flex-col max-[550px]:items-center max-[550px]:text-center md:flex-row items-start gap-6 p-6">
           <img 
             src="https://www.telecomarmenia.am/images/team_apps/1/17116228874075.png" 
             alt="Team Energy" 

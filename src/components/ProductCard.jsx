@@ -1,6 +1,6 @@
 export default function ProductCard({ product }) {
   return (
-    <div className="border border-gray-200 p-6 flex flex-col items-center">
+    <div className="border border-gray-200 p-6 flex flex-col items-center bg-white">
 
       <img
         src={product.image}

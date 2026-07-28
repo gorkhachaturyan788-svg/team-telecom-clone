@@ -9,14 +9,21 @@ export default function MyTeamGallery() {
   ];
 
   return (
-    <div style={{ marginTop: "60px", marginBottom: "60px" }}>
-      <h2 style={{ fontSize: "32px", color: "#1b2d46", marginBottom: "30px", fontWeight: "700" }}>
+    <div className="my-[60px]">
+      <h2 className="text-[32px] text-[#1b2d46] mb-[30px] font-bold">
         ios
       </h2>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "20px" }}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {images.map((src, index) => (
-          <div key={index} style={{ borderRadius: "20px", overflow: "hidden", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}>
-            <img src={src} alt={`Team App Screen ${index + 1}`} style={{ width: "100%", height: "auto", display: "block" }} />
+          <div 
+            key={index} 
+            className="rounded-[20px] overflow-hidden shadow-[0_4px_12px_rgba(0,0,0,0.1)] bg-white"
+          >
+            <img 
+              src={src} 
+              alt={`Team App Screen ${index + 1}`} 
+              className="w-full h-auto block" 
+            />
           </div>
         ))}
       </div>

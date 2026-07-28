@@ -8,28 +8,13 @@ export default function TeamTVGallery() {
   ];
 
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "20px",
-        overflowX: "auto",
-        paddingBottom: "15px",
-      }}
-    >
+    <div className="flex items-center gap-5 overflow-x-auto pb-4 max-w-7xl mx-auto px-4">
       {screenshots.map((src, index) => (
         <img
           key={index}
           src={src}
           alt={`TeamTV Screenshot ${index + 1}`}
-          style={{
-            width: "260px",
-            height: "460px",
-            borderRadius: "16px",
-            objectFit: "cover",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-            flexShrink: 0,
-          }}
+          className="w-[260px] h-[460px] rounded-2xl object-cover shadow-md shrink-0"
         />
       ))}
     </div>

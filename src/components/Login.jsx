@@ -1,14 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   GoogleAuthProvider, 
   signInWithPopup, 
   createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword 
+  signInWithEmailAndPassword,
+  onAuthStateChanged
 } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "../firebase";
+import Profil from "./profil";
 
 export default function AuthPage() {
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
   const [activeTab, setActiveTab] = useState("individuals");
   const [showPassword, setShowPassword] = useState(false);
   const [lang, setLang] = useState("am");
@@ -16,75 +21,110 @@ export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setAuthLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  if (authLoading) {
+    return <div className="flex justify-center items-center min-h-screen">Բեռնվում է...</div>;
+  }
+
+  if (user) {
+    return <Profil user={user} />;
+  }
 
   const handleGoogleLogin = async () => {
     if (loading) return;
     setLoading(true);
+    setError("");
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      const user = result.user;
+      const loggedUser = result.user;
 
-      await setDoc(doc(db, "users", user.uid), {
-        uid: user.uid,
-        name: user.displayName || "Անուն չկա",
-        email: user.email,
-        photoURL: user.photoURL || "",
+      await setDoc(doc(db, "users", loggedUser.uid), {
+        uid: loggedUser.uid,
+        name: loggedUser.displayName || "Անուն չկա",
+        email: loggedUser.email,
+        photoURL: loggedUser.photoURL || "",
         createdAt: new Date()
       }, { merge: true });
 
-      console.log("Հաջողությամբ մուտք գործեց և պահպանվեց բազայում:", user.email);
-    } catch (error) {
-      console.error("Սխալ մուտքի ժամանակ:", error.message);
+      console.log("Հաջողությամբ մուտք գործեց և պահպանվեց բազայում:", loggedUser.email);
+    } catch (err) {
+      setError(err.message);
+      console.error("Սխալ մուտքի ժամանակ:", err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleRegister = async () => {
-    if (!email || !password) return;
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    if (!email || !password || loading) return;
+    
+    setLoading(true);
+    setError("");
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
+      const regUser = userCredential.user;
 
-      await setDoc(doc(db, "users", user.uid), {
-        uid: user.uid,
-        email: user.email,
+      await setDoc(doc(db, "users", regUser.uid), {
+        uid: regUser.uid,
+        email: regUser.email,
+        name: "Անուն չկա",
         createdAt: new Date()
-      });
+      }, { merge: true });
 
-      console.log("Գրանցվեց և պահպանվեց բազայում:", user.email);
-    } catch (error) {
-      console.error("Գրանցման սխալ:", error.message);
+      console.log("Գրանցվեց և պահպանվեց բազայում:", regUser.email);
+    } catch (err) {
+      setError(err.message);
+      console.error("Գրանցման սխալ:", err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    if (!email || !password) return;
+    if (!email || !password || loading) return;
+    
+    setLoading(true);
+    setError("");
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       console.log("Մուտք գործեց:", userCredential.user.email);
-    } catch (error) {
-      console.error("Մուտքի սխալ:", error.message);
+    } catch (err) {
+      setError(err.message);
+      console.error("Մուտքի սխալ:", err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen font-sans bg-[#f4f6f9]">
-      <div className="w-[40%] min-w-[400px] flex flex-col justify-between items-center py-10 px-5 box-border">
+    <div className="flex flex-col lg:flex-row min-h-screen font-sans bg-[#f4f6f9]">
+      <div className="w-full lg:w-[40%] min-w-0 lg:min-w-[400px] flex flex-col justify-between items-center py-10 px-5 box-border">
         <div className="flex gap-10 mb-[30px]">
           <button 
+            type="button"
             onClick={() => setActiveTab("individuals")}
-            className={`bg-none border-none text-[16px] font-semibold cursor-pointer pb-2 transition-all ${
+            className={`bg-transparent border-none text-[16px] font-semibold cursor-pointer pb-2 transition-all ${
               activeTab === "individuals" ? "text-[#1a1a1a] border-b-[3px] border-[#00bcd4]" : "text-[#999] border-b-[3px] border-transparent"
             }`}
           >
             Անհատներին
           </button>
           <button 
+            type="button"
             onClick={() => setActiveTab("business")}
-            className={`bg-none border-none text-[16px] font-semibold cursor-pointer pb-2 transition-all ${
+            className={`bg-transparent border-none text-[16px] font-semibold cursor-pointer pb-2 transition-all ${
               activeTab === "business" ? "text-[#1a1a1a] border-b-[3px] border-[#00bcd4]" : "text-[#999] border-b-[3px] border-transparent"
             }`}
           >
@@ -103,6 +143,7 @@ export default function AuthPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Մուտքագրեք էլ. հասցեն"
                   className="border-none outline-none w-full text-[14px] text-[#333]"
+                  required
                 />
               </div>
             </div>
@@ -116,23 +157,31 @@ export default function AuthPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Մուտքագրեք գաղտնաբառը"
                   className="border-none outline-none w-full text-[14px] text-[#333]"
+                  required
                 />
                 <button 
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="bg-none border-none cursor-pointer text-[#777]"
+                  className="bg-transparent border-none cursor-pointer text-[#777]"
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                 </button>
               </div>
             </div>
 
-            <button type="submit" className="w-full bg-[#eb5353] text-white border-none rounded-[20px] py-3 text-[16px] font-semibold cursor-pointer mb-5 hover:bg-[#d44343] transition-colors">
-              Մուտք
+            {error && <p className="text-red-500 mb-4 text-xs">{error}</p>}
+
+            <button 
+              type="submit" 
+              disabled={loading}
+              className="w-full bg-[#eb5353] text-white border-none rounded-[20px] py-3 text-[16px] font-semibold cursor-pointer mb-5 hover:bg-[#d44343] transition-colors disabled:opacity-50"
+            >
+              {loading ? "Բեռնվում է..." : "Մուտք"}
             </button>
           </form>
 
           <button 
+            type="button"
             onClick={handleGoogleLogin}
             disabled={loading}
             className="w-full bg-white text-[#444] border border-[#ccc] rounded-[20px] py-3 text-[15px] font-semibold cursor-pointer mb-5 flex items-center justify-center gap-2.5 hover:bg-gray-50 transition-colors disabled:opacity-50"
@@ -143,7 +192,7 @@ export default function AuthPage() {
               <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
               <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.46-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
             </svg>
-            {loading ? "Բեռնվում է..." : "Մուտք Google-ով"}
+            Մուտք Google-ով
           </button>
 
           <div className="text-center mb-[30px]">
@@ -153,26 +202,27 @@ export default function AuthPage() {
           <button 
             type="button"
             onClick={handleRegister}
-            className="w-full bg-transparent text-[#eb5353] border border-[#eb5353] rounded-[20px] py-3 text-[16px] font-semibold cursor-pointer hover:bg-red-50 transition-colors"
+            disabled={loading}
+            className="w-full bg-transparent text-[#eb5353] border border-[#eb5353] rounded-[20px] py-3 text-[16px] font-semibold cursor-pointer hover:bg-red-50 transition-colors disabled:opacity-50"
           >
-            Գրանցում
+            {loading ? "Բեռնվում է..." : "Գրանցում"}
           </button>
         </div>
 
         <div className="flex gap-[25px] mt-10">
-          <button onClick={() => setLang("am")} className={`bg-none border-none cursor-pointer pb-[5px] ${lang === "am" ? "border-b-2 border-[#00bcd4]" : "border-b-2 border-transparent"}`}>
+          <button type="button" onClick={() => setLang("am")} className={`bg-transparent border-none cursor-pointer pb-[5px] ${lang === "am" ? "border-b-2 border-[#00bcd4]" : "border-b-2 border-transparent"}`}>
             <span className="text-[22px]">🇦🇲</span>
           </button>
-          <button onClick={() => setLang("ru")} className={`bg-none border-none cursor-pointer pb-[5px] ${lang === "ru" ? "border-b-2 border-[#00bcd4]" : "border-b-2 border-transparent"}`}>
+          <button type="button" onClick={() => setLang("ru")} className={`bg-transparent border-none cursor-pointer pb-[5px] ${lang === "ru" ? "border-b-2 border-[#00bcd4]" : "border-b-2 border-transparent"}`}>
             <span className="text-[22px]">🇷🇺</span>
           </button>
-          <button onClick={() => setLang("en")} className={`bg-none border-none cursor-pointer pb-[5px] ${lang === "en" ? "border-b-2 border-[#00bcd4]" : "border-b-2 border-transparent"}`}>
+          <button type="button" onClick={() => setLang("en")} className={`bg-transparent border-none cursor-pointer pb-[5px] ${lang === "en" ? "border-b-2 border-[#00bcd4]" : "border-b-2 border-transparent"}`}>
             <span className="text-[22px]">🇬🇧</span>
           </button>
         </div>
       </div>
 
-      <div className="w-[60%] bg-[url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80')] bg-cover bg-center relative flex flex-col justify-between p-[60px] box-border overflow-hidden">
+      <div className="hidden lg:flex w-[60%] bg-[url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80')] bg-cover bg-center relative flex-col justify-between p-[60px] box-border overflow-hidden">
         <div className="absolute inset-0 bg-black/12 z-[1]" />
 
         <div className="relative z-[2] flex justify-center items-center gap-10 mt-10">

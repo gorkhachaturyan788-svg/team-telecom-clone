@@ -15,12 +15,11 @@ export default function BillPaymentForm() {
   };
  
   return (
-    <div className="w-full max-w-md bg-white p-6">
-      <h1 className="text-2xl font-bold text-slate-800 mb-6">
+    <div className="w-full max-w-md bg-white p-6 max-[550px]:p-4 max-[550px]:w-full">
+      <h1 className="text-2xl max-[550px]:text-xl font-bold text-slate-800 mb-6">
         Կատարեք առցանց վճարումներ
       </h1>
  
-      {/* Number field */}
       <div className="mb-5">
         <label className="block text-slate-700 font-semibold mb-2">
           Համար
@@ -38,7 +37,6 @@ export default function BillPaymentForm() {
         </p>
       </div>
  
-      {/* Amount field */}
       <div className="mb-6">
         <label className="block text-slate-700 font-semibold mb-2">
           Գումար
@@ -64,7 +62,6 @@ export default function BillPaymentForm() {
         </p>
       </div>
  
-      {/* Pay button */}
       <button
         type="button"
         onClick={handlePay}
@@ -78,8 +75,7 @@ export default function BillPaymentForm() {
         Վճարել
       </button>
  
-      {/* Payment method logos */}
-      <div className="flex items-center gap-4 mb-8">
+      <div className="flex items-center gap-4 mb-8 max-[550px]:justify-center">
         <span className="italic font-black text-xl tracking-tight">
           <span className="text-blue-700">VISA</span>
         </span>
@@ -100,4 +96,3 @@ export default function BillPaymentForm() {
     </div>
   );
 }
- 

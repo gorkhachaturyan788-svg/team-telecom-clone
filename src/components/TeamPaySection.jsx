@@ -18,35 +18,27 @@ export default function TeamPaySection() {
   ];
 
   return (
-    <div style={{ padding: "60px 0" }}>
-      <h2 style={{ fontSize: "32px", color: "#1b2d46", marginBottom: "40px", fontWeight: "700" }}>
+    <div className="py-[60px] max-w-7xl mx-auto px-4">
+      <h2 className="text-[32px] text-[#1b2d46] mb-10 font-bold">
         Այլ հավելվածներ
       </h2>
       
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "40px" }}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
         {apps.map((app, index) => (
-          <div key={index} style={{ display: "flex", alignItems: "center", gap: "25px", padding: "20px" }}>
+          <div key={index} className="flex flex-col sm:flex-row items-center sm:items-start gap-6 p-5 bg-white rounded-3xl shadow-sm border border-gray-100">
             <img 
               src={app.img} 
               alt={app.title} 
-              style={{ width: "160px", height: "160px", borderRadius: "20px", objectFit: "cover" }} 
+              className="w-[160px] h-[160px] rounded-[20px] object-cover shrink-0" 
             />
-            <div>
-              <h3 style={{ fontSize: "24px", color: "#1b2d46", marginBottom: "10px" }}>{app.title}</h3>
-              <p style={{ color: "#68758a", fontSize: "14px", lineHeight: "1.6", marginBottom: "20px" }}>
+            <div className="text-center sm:text-left">
+              <h3 className="text-[24px] text-[#1b2d46] mb-2.5 font-bold">{app.title}</h3>
+              <p className="text-[#68758a] text-[14px] leading-relaxed mb-5">
                 {app.desc}
               </p>
               <Link 
                 to={app.link} 
-                style={{ 
-                  backgroundColor: "#f55252", 
-                  color: "#fff", 
-                  padding: "10px 30px", 
-                  borderRadius: "25px", 
-                  textDecoration: "none",
-                  fontWeight: "600",
-                  display: "inline-block"
-                }}
+                className="bg-[#f55252] text-white px-[30px] py-2.5 rounded-[25px] no-underline font-semibold inline-block hover:bg-[#e04444] transition-colors"
               >
                 Միանալ
               </Link>

@@ -39,7 +39,7 @@ const ColHeading = ({ children }) => (
 
 export default function TeamFooter() {
   return (
-    <footer style={{ backgroundColor: "#0b4f70", color: "#ffffff", fontFamily: "'Segoe UI', Arial, sans-serif", padding: "50px 20px 38px" }}>
+    <footer style={{ backgroundColor: "#0b4f70", color: "#ffffff", fontFamily: "'Segoe UI', Arial, sans-serif", padding: "50px 5% 38px" }}>
       <div style={{ 
         maxWidth: "1240px", 
         margin: "0 auto", 

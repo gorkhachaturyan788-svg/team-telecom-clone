@@ -16,8 +16,7 @@ export default function EshopSlider() {
   const [current, setCurrent] = useState(0);
 
   return (
-    <div className="relative w-full h-[300px] md:h-[450px] lg:h-[550px] overflow-hidden bg-black">
-      
+    <div className="relative w-full h-[250px] sm:h-[350px] md:h-[450px] lg:h-[550px] overflow-hidden bg-black">
       {slides.map((slide, index) => (
         <div
           key={index}
@@ -31,49 +30,51 @@ export default function EshopSlider() {
             className="w-full h-full object-contain bg-black"
           />
 
-          {/* Overlay */}
-          <div className="absolute inset-0 bg-black/40 flex flex-col justify-center px-10 md:px-20 text-white space-y-4">
-            <h1 className="text-3xl md:text-5xl font-black uppercase">
-              {slide.title}
-            </h1>
+          {slide.title && (
+            <div className="absolute inset-0 bg-black/40 flex flex-col justify-center px-6 sm:px-10 md:px-20 text-white space-y-4">
+              <h1 className="text-2xl sm:text-3xl md:text-5xl font-black uppercase">
+                {slide.title}
+              </h1>
 
-            <p className="text-lg md:text-xl">
-              {slide.subtitle}
-            </p>
+              {slide.subtitle && (
+                <p className="text-base sm:text-lg md:text-xl">
+                  {slide.subtitle}
+                </p>
+              )}
 
-            <button className="bg-[#E54B24] w-fit px-8 py-3 rounded-full font-bold hover:bg-orange-700 transition">
-              {slide.btn}
-            </button>
-          </div>
+              {slide.btn && (
+                <button className="bg-[#E54B24] w-fit px-6 sm:px-8 py-2.5 sm:py-3 rounded-full font-bold hover:bg-orange-700 transition">
+                  {slide.btn}
+                </button>
+              )}
+            </div>
+          )}
         </div>
       ))}
 
-      {/* LEFT */}
       <button
         onClick={() =>
           setCurrent((prev) =>
             prev === 0 ? slides.length - 1 : prev - 1
           )
         }
-        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-black/30 text-white w-10 h-10 rounded-full hover:bg-black/50"
+        className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 bg-black/30 text-white w-8 h-8 sm:w-10 sm:h-10 rounded-full hover:bg-black/50 flex items-center justify-center"
       >
         ❮
       </button>
 
-      {/* RIGHT */}
       <button
         onClick={() =>
           setCurrent((prev) =>
             prev === slides.length - 1 ? 0 : prev + 1
           )
         }
-        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-black/30 text-white w-10 h-10 rounded-full hover:bg-black/50"
+        className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 bg-black/30 text-white w-8 h-8 sm:w-10 sm:h-10 rounded-full hover:bg-black/50 flex items-center justify-center"
       >
         ❯
       </button>
 
-      {/* DOTS */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+      <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2">
         {slides.map((_, idx) => (
           <button
             key={idx}

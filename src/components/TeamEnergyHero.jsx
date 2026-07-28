@@ -3,43 +3,43 @@ import { Star } from "lucide-react";
 
 export default function TeamEnergyHero() {
   return (
-    <div style={{ marginBottom: "60px", display: "flex", alignItems: "flex-start", gap: "35px" }}>
-      <div style={{ width: "240px", height: "240px", background: "#0f4965", borderRadius: "18px", display: "flex", justifyContent: "center", alignItems: "center", flexShrink: 0 }}>
+    <div className="mb-[60px] flex flex-col md:flex-row items-center md:items-start gap-8 max-w-7xl mx-auto px-4">
+      <div className="w-[240px] h-[240px] bg-[#0f4965] rounded-[18px] flex justify-center items-center shrink-0 shadow-md">
         <img 
           src="https://www.telecomarmenia.am/images/team_apps/1/17116228874075.png" 
           alt="Team Energy Logo" 
-          style={{ width: "80%", height: "auto", objectFit: "contain" }}
+          className="w-[80%] h-auto object-contain"
         />
       </div>
 
-      <div style={{ marginTop: "20px", display: "flex", flexDirection: "column", gap: "25px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-          <a href="#" style={{ display: "block" }}>
+      <div className="mt-2 flex flex-col gap-6 w-full md:w-auto">
+        <div className="flex flex-col sm:flex-row items-center sm:items-center gap-5">
+          <a href="#" className="block">
             <img 
               src="https://www.telecomarmenia.am/img/redesign/app_store.png" 
               alt="App Store" 
-              style={{ height: "56px", cursor: "pointer" }} 
+              className="h-[56px] cursor-pointer object-contain" 
             />
           </a>
-          <div style={{ display: "flex", alignItems: "center" }}>
+          <div className="flex items-center">
             {[1, 2, 3, 4].map((i) => <Star key={i} fill="#FFC83D" color="#FFC83D" size={24} />)}
             <Star color="#ECECEC" size={24} />
-            <span style={{ marginLeft: "12px", fontSize: "20px", fontWeight: "bold", color: "#1c2c44" }}>4.5</span>
+            <span className="ml-3 text-[20px] font-bold text-[#1c2c44]">4.5</span>
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-          <a href="#" style={{ display: "block" }}>
+        <div className="flex flex-col sm:flex-row items-center sm:items-center gap-5">
+          <a href="#" className="block">
             <img 
               src="https://www.telecomarmenia.am/img/redesign/google_play.png" 
               alt="Google Play" 
-              style={{ height: "56px", cursor: "pointer" }} 
+              className="h-[56px] cursor-pointer object-contain" 
             />
           </a>
-          <div style={{ display: "flex", alignItems: "center" }}>
+          <div className="flex items-center">
             {[1, 2, 3, 4].map((i) => <Star key={i} fill="#FFC83D" color="#FFC83D" size={24} />)}
             <Star color="#ECECEC" size={24} />
-            <span style={{ marginLeft: "12px", fontSize: "20px", fontWeight: "bold", color: "#1c2c44" }}>4.4</span>
+            <span className="ml-3 text-[20px] font-bold text-[#1c2c44]">4.4</span>
           </div>
         </div>
       </div>

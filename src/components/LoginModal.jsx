@@ -17,6 +17,8 @@ export default function LoginModal({ onClose }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!email || !password || loading) return;
+
     setError('');
     setLoading(true);
 
@@ -46,6 +48,8 @@ export default function LoginModal({ onClose }) {
   };
 
   const handleGoogleLogin = async () => {
+    if (loading) return;
+
     setError('');
     setLoading(true);
 
@@ -56,9 +60,9 @@ export default function LoginModal({ onClose }) {
 
       await setDoc(doc(db, 'users', user.uid), {
         uid: user.uid,
-        name: user.displayName,
+        name: user.displayName || '',
         email: user.email,
-        photoURL: user.photoURL,
+        photoURL: user.photoURL || '',
         createdAt: new Date()
       }, { merge: true });
 
@@ -127,6 +131,7 @@ export default function LoginModal({ onClose }) {
         </form>
 
         <button
+          type="button"
           onClick={() => setIsSignUp(!isSignUp)}
           className="text-blue-600 text-sm mb-4 w-full hover:underline"
         >
@@ -134,6 +139,7 @@ export default function LoginModal({ onClose }) {
         </button>
 
         <button
+          type="button"
           onClick={onClose}
           className="w-full bg-gray-300 p-2 rounded hover:bg-gray-400"
         >

@@ -8,17 +8,17 @@ export default function TeamEnergyGallery() {
   ];
 
   return (
-    <div style={{ padding: "40px 0", textAlign: "left" }}>
-      <h2 style={{ fontSize: "24px", color: "#1b2d46", marginBottom: "20px", fontWeight: "700" }}>
-        ios
+    <div className="py-10 text-left max-w-7xl mx-auto px-4">
+      <h2 className="text-2xl text-[#1b2d46] mb-6 font-bold">
+        iOS
       </h2>
-      <div style={{ display: "flex", justifyContent: "flex-start", gap: "20px" }}>
+      <div className="flex flex-wrap md:flex-nowrap justify-start gap-5">
         {images.map((src, index) => (
-          <div key={index} style={{ width: "220px", borderRadius: "16px", overflow: "hidden", boxShadow: "0 4px 10px rgba(0,0,0,0.1)" }}>
+          <div key={index} className="w-full sm:w-[220px] rounded-2xl overflow-hidden shadow-md bg-white">
             <img 
               src={src} 
               alt={`Feature ${index + 1}`} 
-              style={{ width: "100%", height: "auto", display: "block" }} 
+              className="w-full h-auto block object-cover" 
             />
           </div>
         ))}

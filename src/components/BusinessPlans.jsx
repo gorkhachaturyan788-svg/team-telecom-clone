@@ -18,37 +18,41 @@ export default function BusinessPlans() {
   ];
 
   return (
-    <section className="py-20 px-[10%] bg-gray-50">
-      <h2 className="text-4xl font-bold text-[#003853] mb-16">Բջջային կապի սակագներ</h2>
+    <section className="py-20 px-[5%] max-[550px]:px-4 bg-gray-50">
+      <h2 className="text-4xl max-[550px]:text-2xl font-bold text-[#003853] mb-16 max-[550px]:mb-8 text-center md:text-left">
+        Բջջային կապի սակագներ
+      </h2>
       
       <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
         {/* SMART BUSINESS քարտ */}
-        <div className="bg-[#3b4a54] p-10 text-white rounded-xl flex flex-col justify-between transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:border-2 hover:border-blue-300">
+        <div className="bg-[#3b4a54] p-10 max-[550px]:p-6 text-white rounded-xl flex flex-col justify-between transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:border-2 hover:border-blue-300">
           <div>
-            <h3 className="text-3xl font-bold mb-3">SMART</h3>
-            <h3 className="text-3xl font-bold mb-8">BUSINESS</h3>
-            <p className="text-lg">Կարգավորեք Ձեր փաթեթը</p>
+            <h3 className="text-3xl max-[550px]:text-2xl font-bold mb-3">SMART</h3>
+            <h3 className="text-3xl max-[550px]:text-2xl font-bold mb-8">BUSINESS</h3>
+            <p className="text-lg max-[550px]:text-base">Կարգավորեք Ձեր փաթեթը</p>
           </div>
-          <button className="bg-red-500 py-4 px-8 rounded-lg w-full font-bold hover:bg-red-600 transition">Միանալ</button>
+          <button className="bg-red-500 py-4 px-8 rounded-lg w-full font-bold hover:bg-red-600 transition mt-8">
+            Միանալ
+          </button>
         </div>
 
         {/* PRO պլաններ */}
         {plans.map((plan, index) => (
           <div 
             key={index} 
-            className="bg-white border border-gray-200 p-10 rounded-xl text-center shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:border-blue-200 flex flex-col"
+            className="bg-white border border-gray-200 p-10 max-[550px]:p-6 rounded-xl text-center shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:border-blue-200 flex flex-col"
           >
-            <h3 className="text-3xl font-bold text-[#003853] mb-10">{plan.name}</h3>
+            <h3 className="text-3xl max-[550px]:text-2xl font-bold text-[#003853] mb-10 max-[550px]:mb-6">{plan.name}</h3>
             
-            <div className="space-y-6 text-left text-gray-700 text-lg font-medium mb-10 flex-grow">
-              <p className="flex items-center gap-4"><img src="https://www.telecomarmenia.am/files/icons/1/16509740618025/56x56.png" className="w-8 h-8" alt="gb" /> {plan.gb}</p>
-              <p className="flex items-center gap-4"><img src="https://www.telecomarmenia.am/files/icons/1/16510708980018/56x56.png" className="w-8 h-8" alt="min" /> {plan.min}</p>
-              <p className="flex items-center gap-4"><img src="https://www.telecomarmenia.am/files/icons/1/16509740618025/56x56.png" className="w-8 h-8" alt="tv" /> {plan.tv}</p>
-              <p className="flex items-center gap-4"><img src="https://www.telecomarmenia.am/files/icons/1/16510702991504/56x56.png" className="w-8 h-8" alt="sms" /> {plan.sms}</p>
+            <div className="space-y-6 max-[550px]:space-y-4 text-left text-gray-700 text-lg max-[550px]:text-base font-medium mb-10 max-[550px]:mb-6 flex-grow">
+              <p className="flex items-center gap-4"><img src="https://www.telecomarmenia.am/files/icons/1/16509740618025/56x56.png" className="w-8 h-8 shrink-0" alt="gb" /> {plan.gb}</p>
+              <p className="flex items-center gap-4"><img src="https://www.telecomarmenia.am/files/icons/1/16510708980018/56x56.png" className="w-8 h-8 shrink-0" alt="min" /> {plan.min}</p>
+              <p className="flex items-center gap-4"><img src="https://www.telecomarmenia.am/files/icons/1/16509740618025/56x56.png" className="w-8 h-8 shrink-0" alt="tv" /> {plan.tv}</p>
+              <p className="flex items-center gap-4"><img src="https://www.telecomarmenia.am/files/icons/1/16510702991504/56x56.png" className="w-8 h-8 shrink-0" alt="sms" /> {plan.sms}</p>
             </div>
             
             {plan.apps && (
-              <div className="flex justify-center gap-3 mb-10">
+              <div className="flex justify-center gap-3 mb-10 max-[550px]:mb-6">
                 {plan.apps.map((app, i) => (
                   <img key={i} src={app} alt="app" className="w-8 h-8 object-contain" />
                 ))}

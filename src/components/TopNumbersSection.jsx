@@ -24,23 +24,19 @@ const numbers = [
 
 export default function TopNumbersSection() {
   return (
-    <section className="max-w-7xl mx-auto py-16">
-
-      <h2 className="text-3xl font-bold mb-8">
+    <section className="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
+      <h2 className="text-3xl font-bold text-[#1b2d46] mb-8">
         Top Համարներ
       </h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
         {numbers.map((item) => (
           <NumberCard
             key={item.id}
             {...item}
           />
         ))}
-
       </div>
-
     </section>
   );
 }

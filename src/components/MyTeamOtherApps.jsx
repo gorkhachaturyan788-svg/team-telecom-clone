@@ -2,49 +2,49 @@ import React from "react";
 
 export default function MyTeamOtherApps() {
   return (
-    <div style={{ marginTop: "80px", marginBottom: "80px" }}>
-      <h2 style={{ fontSize: "32px", color: "#1b2d46", marginBottom: "40px", fontWeight: "700" }}>
+    <div className="my-[80px]">
+      <h2 className="text-[32px] text-[#1b2d46] mb-[40px] font-bold">
         Այլ հավելվածներ
       </h2>
       
-      <div style={{ display: "flex", gap: "40px" }}>
-        <div style={{ display: "flex", alignItems: "flex-start", gap: "25px" }}>
+      <div className="flex flex-col lg:flex-row gap-[40px]">
+        <div className="flex items-start gap-[25px]">
           <img 
             src="https://www.telecomarmenia.am/images/team_apps/1/17249416402556.png" 
             alt="TeamTV" 
-            style={{ width: "220px", height: "220px", borderRadius: "20px", flexShrink: 0, objectFit: "cover" }} 
+            className="w-[220px] h-[220px] rounded-[20px] shrink-0 object-cover" 
           />
-          <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
-            <h3 style={{ fontSize: "24px", color: "#1b2d46", margin: 0 }}>TeamTV</h3>
-            <p style={{ color: "#68758a", fontSize: "16px", margin: 0 }}>
+          <div className="flex flex-col gap-[15px]">
+            <h3 className="text-[24px] text-[#1b2d46] m-0">TeamTV</h3>
+            <p className="text-[#68758a] text-[16px] m-0">
               Ժամանակակից TV միշտ քեզ հետ<br />
               Մինչև 200 ալիք<br />
               Ավելի քան 5000 ֆիլմ տեսադարանում<br />
               Դիտում 5 սարքավորումներով<br />
               Մինչև 7 օր catch-up...
             </p>
-            <button style={{ width: "160px", background: "#f55252", color: "#fff", border: "none", padding: "12px 0", borderRadius: "25px", cursor: "pointer", fontWeight: "600" }}>
+            <button className="w-[160px] bg-[#f55252] text-white border-none py-3 rounded-[25px] cursor-pointer font-semibold hover:bg-[#e04545] transition-colors">
               Միանալ
             </button>
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "flex-start", gap: "25px" }}>
+        <div className="flex items-start gap-[25px]">
           <img 
             src="https://www.telecomarmenia.am/images/team_apps/1/17691688001842.png" 
             alt="Team Energy" 
-            style={{ width: "220px", height: "220px", borderRadius: "20px", flexShrink: 0, objectFit: "cover" }} 
+            className="w-[220px] h-[220px] rounded-[20px] shrink-0 object-cover" 
           />
-          <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
-            <h3 style={{ fontSize: "24px", color: "#1b2d46", margin: 0 }}>Team Energy</h3>
-            <p style={{ color: "#68758a", fontSize: "16px", margin: 0 }}>
+          <div className="flex flex-col gap-[15px]">
+            <h3 className="text-[24px] text-[#1b2d46] m-0">Team Energy</h3>
+            <p className="text-[#68758a] text-[16px] m-0">
               Team Energy հավելվածի միջոցով<br />
               կարող եք գտնել մոտակա<br />
               էլեկտրական լիցքավորման<br />
               կայանը, հետևելով քայլերի<br />
               հաջորդականությանը՝...
             </p>
-            <button style={{ width: "160px", background: "#f55252", color: "#fff", border: "none", padding: "12px 0", borderRadius: "25px", cursor: "pointer", fontWeight: "600" }}>
+            <button className="w-[160px] bg-[#f55252] text-white border-none py-3 rounded-[25px] cursor-pointer font-semibold hover:bg-[#e04545] transition-colors">
               Միանալ
             </button>
           </div>

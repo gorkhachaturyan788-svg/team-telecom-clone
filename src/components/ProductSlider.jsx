@@ -34,32 +34,39 @@ export default function ProductSlider() {
   if (loading) return <div className="text-center py-10">Loading...</div>;
 
   return (
-    <section className="max-w-7xl mx-auto py-10 px-4">
-      <h2 className="text-3xl font-bold mb-6">Մեր Արտադրյալներ</h2>
+    <section className="max-w-7xl mx-auto py-10 px-4 relative">
+      <h2 className="text-3xl font-bold mb-6 text-[#002d56]">Մեր Արտադրյալներ</h2>
       
       <Swiper
         modules={[Navigation, Pagination]}
         navigation
         pagination={{ clickable: true }}
         spaceBetween={20}
+        slidesPerView={1}
         breakpoints={{
           640: {
-            slidesPerView: 1,
+            slidesPerView: 2,
           },
           768: {
-            slidesPerView: 2,
+            slidesPerView: 3,
           },
           1024: {
             slidesPerView: 4,
           },
         }}
+        className="pb-14"
       >
         {products.map((product) => (
-          <SwiperSlide key={product.id}>
+          <SwiperSlide key={product.id} className="h-auto">
             <ProductCard product={product} />
           </SwiperSlide>
         ))}
       </Swiper>
+
+      <style>{`
+        .swiper-button-next, .swiper-button-prev { color: #f36f21 !important; }
+        .swiper-pagination-bullet-active { background: #f36f21 !important; }
+      `}</style>
     </section>
   );
 }

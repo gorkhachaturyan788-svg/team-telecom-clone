@@ -15,7 +15,7 @@ const items = [
 
 export default function VirtualAssistant() {
   return (
-    <section className="bg-[#00263a] py-20 px-[10%] text-center text-white">
+    <section className="bg-[#00263a] py-20 px-6 sm:px-10 md:px-[10%] text-center text-white">
       <h2 className="text-4xl font-bold mb-16">ՎԻՐՏՈՒԱԼ ԱՀԿ</h2>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-16">

@@ -9,22 +9,17 @@ export default function TeamPayGallery() {
   ];
 
   return (
-    <div style={{ padding: "40px 0", marginBottom: "40px" }}>
-      <h2 style={{ fontSize: "24px", color: "#1b2d46", marginBottom: "20px", fontWeight: "700" }}>
+    <div className="py-10 mb-10 max-w-7xl mx-auto px-4">
+      <h2 className="text-2xl text-[#1b2d46] mb-6 font-bold">
         iOS
       </h2>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: "20px" }}>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
         {images.map((src, index) => (
           <img 
             key={index}
             src={src} 
             alt={`TeamPay screenshot ${index + 1}`} 
-            style={{ 
-              width: "23%", 
-              height: "auto", 
-              borderRadius: "24px",
-              boxShadow: "0 10px 20px rgba(0,0,0,0.1)"
-            }} 
+            className="w-full h-auto rounded-[24px] shadow-lg object-cover" 
           />
         ))}
       </div>
