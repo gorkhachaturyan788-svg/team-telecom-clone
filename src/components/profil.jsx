@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
 import { signOut } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
 import { auth } from "../firebase";
 
 export default function Profil({ user }) {
+  const navigate = useNavigate();
+
   const [activeMenu, setActiveMenu] = useState(() => {
     return localStorage.getItem("activeMenu") || "data";
   });
@@ -13,15 +16,22 @@ export default function Profil({ user }) {
 
   const handleLogout = async () => {
     try {
+      console.log("Logout...");
       localStorage.removeItem("activeMenu");
+
       await signOut(auth);
-    } catch (err) {
-      console.error("Դուրս գալու սխալ:", err);
+
+      console.log("Logout success");
+
+      navigate("/login"); 
+    } catch (error) {
+      console.error(error);
     }
   };
 
   return (
     <div className="flex min-h-screen font-sans bg-[#f4f6f9] overflow-hidden">
+      {/* Ձախ կողմի մենյու */}
       <div className="w-[320px] bg-white border-r border-[#e2e8f0] flex flex-col justify-between shrink-0 shadow-sm z-10">
         <div>
           <div className="p-5 border-b border-[#e2e8f0] flex justify-between items-center cursor-pointer hover:bg-gray-50 transition-colors">
@@ -119,7 +129,7 @@ export default function Profil({ user }) {
             >
               <div className="flex items-center gap-3">
                 <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636l3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
                 <span>Օգնություն</span>
               </div>
@@ -131,15 +141,21 @@ export default function Profil({ user }) {
         <div className="p-5 border-t border-[#e2e8f0]">
           <button 
             onClick={handleLogout}
-            className="w-full bg-red-50 text-red-600 border border-red-200 rounded-xl py-2.5 text-[14px] font-semibold hover:bg-red-100 transition-colors"
+            className="w-full bg-red-50 text-red-600 border border-red-200 rounded-xl py-2.5 text-[14px] font-semibold hover:bg-red-100 transition-colors cursor-pointer"
           >
             Դուրս գալ
           </button>
         </div>
       </div>
 
+      {/* Աջ կողմի բովանդակություն */}
       <div className="flex-1 bg-[url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1400&q=80')] bg-cover bg-center flex flex-col relative overflow-y-auto">
-        <div className="bg-white/90 backdrop-blur-md px-8 py-3.5 border-b border-gray-200 flex items-center gap-4 shadow-sm">
+        
+        {/* Սեղմվող լոգոյով վերնագիրը */}
+        <div 
+          onClick={() => navigate("/")}
+          className="bg-white/90 backdrop-blur-md px-8 py-3.5 border-b border-gray-200 flex items-center gap-4 shadow-sm cursor-pointer hover:bg-white transition-colors"
+        >
           <img 
             src="https://www.telecomarmenia.am/myaccount/img/account-logo.png" 
             alt="Team Telecom Armenia" 
@@ -148,6 +164,7 @@ export default function Profil({ user }) {
           <span className="text-[15px] font-medium text-gray-700">Իմ Team</span>
         </div>
 
+        {/* Բովանդակության մնացած մասը */}
         <div className="p-8 max-w-[800px] flex flex-col gap-6">
           <div className="bg-white rounded-2xl shadow-lg border border-white/40 overflow-hidden">
             <div className="bg-gray-50/80 px-6 py-4 border-b border-gray-100 flex items-center gap-2.5">
@@ -193,7 +210,7 @@ export default function Profil({ user }) {
               <svg width="20" height="20" fill="none" stroke="#334155" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              <h2 className="text-[16px] font-bold text-[#1e293b]">Իմ ծառայությունները</h2>
+              <h2 className="text-[16px] font-bold text-[#1e293b]">Իմ ծառայություններ</h2>
             </div>
             
             <div className="p-8 text-center">
@@ -201,6 +218,7 @@ export default function Profil({ user }) {
             </div>
           </div>
         </div>
+
       </div>
     </div>
   );

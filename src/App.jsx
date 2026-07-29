@@ -13,10 +13,12 @@ import TeamTV from "./pages/TeamTV";
 import MyTeam from "./pages/MyTeam";
 import TeamPay from "./pages/TeamPay";
 import TeamEnergy from "./pages/TeamEnergy";
+import Profil from "./components/profil"; 
 
 function Layout() {
   const location = useLocation();
-  const hideLayout = location.pathname === "/login";
+  
+  const hideLayout = location.pathname === "/login" || location.pathname === "/account";
 
   return (
     <>
@@ -27,6 +29,7 @@ function Layout() {
         <Route path="/business" element={<Business />} />
         <Route path="/eshop" element={<Eshop />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/account" element={<Profil />} /> 
         <Route path="/teamtv" element={<TeamTV />} />
         <Route path="/my-team" element={<MyTeam />} />
         <Route path="/teampay" element={<TeamPay />} />

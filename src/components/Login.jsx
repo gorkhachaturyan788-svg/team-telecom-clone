@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom"; 
 import { 
   GoogleAuthProvider, 
   signInWithPopup, 
@@ -8,11 +9,11 @@ import {
 } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "../firebase";
-import Profil from "./profil";
 
 export default function AuthPage() {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const navigate = useNavigate(); // Ավելացվել է
 
   const [activeTab, setActiveTab] = useState("individuals");
   const [showPassword, setShowPassword] = useState(false);
@@ -31,12 +32,15 @@ export default function AuthPage() {
     return () => unsubscribe();
   }, []);
 
+ 
+  useEffect(() => {
+    if (user) {
+      navigate("/account");
+    }
+  }, [user, navigate]);
+
   if (authLoading) {
     return <div className="flex justify-center items-center min-h-screen">Բեռնվում է...</div>;
-  }
-
-  if (user) {
-    return <Profil user={user} />;
   }
 
   const handleGoogleLogin = async () => {
