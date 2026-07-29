@@ -18,37 +18,51 @@ export default function Profil({ user }) {
     try {
       console.log("Logout...");
       localStorage.removeItem("activeMenu");
-
       await signOut(auth);
-
       console.log("Logout success");
-
       navigate("/login"); 
     } catch (error) {
       console.error(error);
     }
   };
 
+  // Ստուգում ենք user-ի առկայությունը և վերցնում իրական անունն ու նկարը
+  const currentUser = user || auth.currentUser;
+  const displayName = currentUser?.displayName || currentUser?.email?.split("@")[0] || "Օգտատեր";
+  const profileImage = currentUser?.photoURL;
+  const initial = displayName.charAt(0).toUpperCase();
+
   return (
-    <div className="flex min-h-screen font-sans bg-[#f4f6f9] overflow-hidden">
+    <div className="flex min-h-[calc(100vh-100px)] font-sans bg-[#f4f6f9] p-6 gap-6 overflow-hidden">
+      
       {/* Ձախ կողմի մենյու */}
-      <div className="w-[320px] bg-white border-r border-[#e2e8f0] flex flex-col justify-between shrink-0 shadow-sm z-10">
+      <div className="w-[340px] bg-white border border-[#e2e8f0] rounded-2xl flex flex-col justify-between shrink-0 shadow-sm z-10 overflow-y-auto">
         <div>
-          <div className="p-5 border-b border-[#e2e8f0] flex justify-between items-center cursor-pointer hover:bg-gray-50 transition-colors">
-            <div className="flex items-center gap-3">
-              <svg width="20" height="20" fill="none" stroke="#64748b" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              <span className="text-[15px] font-semibold text-[#1e293b]">Հաշիվներ</span>
+          {/* 🌟 ԻՐԱԿԱՆ ՕԳՏԱՏԻՐՈՋ ՆԿԱՐ ԵՎ ԱՆՈՒՆ */}
+          <div className="p-5 border-b border-[#e2e8f0] flex items-center gap-3.5 bg-gradient-to-br from-slate-50 to-white">
+            {profileImage ? (
+              <img 
+                src={profileImage} 
+                alt="Profile" 
+                className="w-12 h-12 rounded-full object-cover border-2 border-[#00bcd4] shadow-sm shrink-0" 
+              />
+            ) : (
+              <div className="w-12 h-12 rounded-full bg-[#00bcd4] text-white flex items-center justify-center font-bold text-lg shadow-sm shrink-0">
+                {initial}
+              </div>
+            )}
+            <div className="overflow-hidden">
+              <h3 className="text-[14px] font-bold text-[#0f172a] truncate">
+                {displayName}
+              </h3>
+              <p className="text-[12px] text-[#64748b] truncate">
+                {currentUser?.email || "Հասցե չկա"}
+              </p>
             </div>
-            <svg width="16" height="16" fill="none" stroke="#64748b" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
           </div>
 
           <div className="p-5 border-b border-[#e2e8f0] bg-[#fafbfc]">
             <p className="text-[12px] text-[#64748b] mb-1">Հիմնական հաշիվ</p>
-            <p className="text-[13px] font-medium text-[#0f172a] truncate mb-2">{user?.email}</p>
             <p className="text-[20px] font-bold text-[#0f172a]">0 ֏</p>
           </div>
 
@@ -149,22 +163,8 @@ export default function Profil({ user }) {
       </div>
 
       {/* Աջ կողմի բովանդակություն */}
-      <div className="flex-1 bg-[url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1400&q=80')] bg-cover bg-center flex flex-col relative overflow-y-auto">
+      <div className="flex-1 bg-[url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1400&q=80')] bg-cover bg-center rounded-2xl flex flex-col relative overflow-y-auto shadow-sm border border-[#e2e8f0]">
         
-        {/* Սեղմվող լոգոյով վերնագիրը */}
-        <div 
-          onClick={() => navigate("/")}
-          className="bg-white/90 backdrop-blur-md px-8 py-3.5 border-b border-gray-200 flex items-center gap-4 shadow-sm cursor-pointer hover:bg-white transition-colors"
-        >
-          <img 
-            src="https://www.telecomarmenia.am/myaccount/img/account-logo.png" 
-            alt="Team Telecom Armenia" 
-            className="h-7 object-contain"
-          />
-          <span className="text-[15px] font-medium text-gray-700">Իմ Team</span>
-        </div>
-
-        {/* Բովանդակության մնացած մասը */}
         <div className="p-8 max-w-[800px] flex flex-col gap-6">
           <div className="bg-white rounded-2xl shadow-lg border border-white/40 overflow-hidden">
             <div className="bg-gray-50/80 px-6 py-4 border-b border-gray-100 flex items-center gap-2.5">
