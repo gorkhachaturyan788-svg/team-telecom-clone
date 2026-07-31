@@ -6,6 +6,8 @@ import { auth } from "./firebase";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Login from "./components/Login";
+import Mobile from "./components/Mobile"; 
+import FiqsvacHeraxosakap from "./components/FiqsvacHeraxosakap"; 
 
 import Home from "./pages/Home";
 import Eshop from "./pages/Eshop";
@@ -22,11 +24,9 @@ function Layout() {
   const location = useLocation();
   const hideLayout = location.pathname === "/login";
 
-  
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-   
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
     });
@@ -43,7 +43,13 @@ function Layout() {
         <Route path="/eshop" element={<Eshop />} />
         <Route path="/login" element={<Login />} />
         
-     
+   
+        <Route path="/tariffs" element={<Mobile />} />
+        <Route path="/tariffs/mobile" element={<Mobile />} />
+        <Route path="/tariffs/fixed" element={<FiqsvacHeraxosakap />} />
+        <Route path="/tariffs/combo" element={<FiqsvacHeraxosakap />} />
+        <Route path="/landline-tariffs" element={<FiqsvacHeraxosakap />} />
+        
         <Route path="/account" element={<Profil user={user} />} /> 
         
         <Route path="/teamtv" element={<TeamTV />} />
