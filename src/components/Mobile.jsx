@@ -44,12 +44,9 @@ export default function Mobile() {
 
           <div className="ml-auto">
             <div className="inline-flex items-center bg-[#ff4d4f] text-white rounded-full shadow-lg overflow-hidden border border-white/30">
-              <div className="px-5 py-2 font-black text-xl md:text-2xl bg-[#ff3b3d]">
-                ֏ 3 500
-              </div>
+
               <div className="px-5 py-2 text-xs md:text-sm font-semibold tracking-wide flex items-center gap-2">
-                <span>անսահմանափակ ինտերնետ</span>
-                <span className="text-lg">♾️</span>
+
               </div>
             </div>
           </div>

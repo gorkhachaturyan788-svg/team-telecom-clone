@@ -1,63 +1,91 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 
 export default function HomeBanner() {
-  const [active, setActive] = useState(3);
-
-  const menuItems = [
-    {
-      title: "Բջջային կապ",
-      icon: "https://www.telecomarmenia.am/files/icons/1/1651070448779/45x45.png",
-      path: "/mobile",
+  const navItems = [
+    { 
+      title: "Բջջային կապ", 
+      icon: "https://www.telecomarmenia.am/files/icons/1/1651070448779/45x45.png", 
+      path: "/tariffs/mobile" 
     },
-    {
-      title: "Ինտերնետ և TV - ԿՈՄԲՈ",
-      icon: "https://www.telecomarmenia.am/files/icons/1/16511223989344/45x45.png",
-      path: "/combo",
+    { 
+      title: "Ինտերնետ և TV - ԿՈՄՄՈ", 
+      icon: "https://www.telecomarmenia.am/files/icons/1/16511223989344/45x45.png", 
+      path: "/tariffs/combo" 
     },
-    {
-      title: "Ինտերնետ և TV - ԿՈՐՊ",
-      icon: "https://www.telecomarmenia.am/files/icons/1/16511223989344/45x45.png",
-      path: "/corp",
+    { 
+      title: "Ինտերնետ և TV - ԿՈՄԲՈ", 
+      icon: "https://www.telecomarmenia.am/files/icons/1/16511223989344/45x45.png", 
+      path: "/tariffs/combi" 
     },
-    {
-      title: "Ֆիքսված հեռախոսակապ",
-      icon: "https://www.telecomarmenia.am/files/icons/1/16510709622802/45x45.png",
-      path: "/fixed-phone",
+    { 
+      title: "Ֆիքսված հեռախոսակապ", 
+      icon: "https://www.telecomarmenia.am/files/icons/1/16510709622802/45x45.png", 
+      path: "/tariffs/fixed" 
     },
   ];
 
   return (
-    <div className="w-full bg-[#f5f5f5]">
-      {/* Banner */}
-      <img
-        src="https://www.telecomarmenia.am/images/menu/1/16509749987896.png"
-        alt=""
-        className="w-full object-cover"
-      />
+    <div className="w-full font-sans bg-[#f7f5f0] pb-10">
+      <div className="relative w-full h-[320px] md:h-[380px] lg:h-[420px] overflow-hidden bg-[#2b6538]">
+        <div 
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ 
+            backgroundImage: `url('https://www.telecomarmenia.am/images/menu/1/16509749987896.png')` 
+          }}
+        >
+          <div className="absolute inset-0 bg-black/10"></div>
+        </div>
 
-      {/* Menu */}
-      <div className="w-[85%] mx-auto -mt-16 bg-white rounded-lg shadow-xl grid grid-cols-4 overflow-hidden relative z-10">
-        {menuItems.map((item, index) => (
-          <Link
-            key={index}
-            to={item.path}
-            onClick={() => setActive(index)}
-            className={`flex flex-col items-center justify-center py-8 border-r border-gray-200 last:border-r-0 transition-all duration-300 hover:bg-gray-50 relative ${
-              active === index ? "after:absolute after:bottom-0 after:left-0 after:w-full after:h-1 after:bg-cyan-400" : ""
-            }`}
-          >
-            <img
-              src={item.icon}
-              alt={item.title}
-              className="w-[45px] h-[45px] mb-4"
-            />
+        <div className="relative max-w-7xl mx-auto h-full px-6 sm:px-10 flex flex-col justify-between py-8">
+          <div></div>
 
-            <span className="text-[#1B4369] text-xl font-semibold text-center">
-              {item.title}
-            </span>
-          </Link>
-        ))}
+          <div className="ml-auto">
+            <div className="inline-flex items-center bg-[#ff4d4f] text-white rounded-full shadow-lg overflow-hidden border border-white/30">
+
+              <div className="px-5 py-2 text-xs md:text-sm font-semibold tracking-wide flex items-center gap-2">
+ 
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 sm:px-10 -mt-10 relative z-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+          {navItems.map((item, index) => (
+            <NavLink
+              key={index}
+              to={item.path}
+              className={({ isActive }) =>
+                `flex flex-col items-center justify-center p-6 text-center transition-all border-b sm:border-b-0 sm:border-r border-gray-100 last:border-none relative group ${
+                  isActive ? "bg-white" : "hover:bg-gray-50/80"
+                }`
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  {isActive && (
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#4bc0c8]" />
+                  )}
+
+                  <div className="flex flex-col items-center transform transition-transform duration-300 group-hover:-translate-y-1.5">
+                    <div className="h-12 flex items-center justify-center mb-3">
+                      <img 
+                        src={item.icon} 
+                        alt={item.title} 
+                        className="w-10 h-10 object-contain transition-transform duration-300 group-hover:scale-110" 
+                      />
+                    </div>
+                    <span className="text-sm font-bold text-[#003853] leading-snug">
+                      {item.title}
+                    </span>
+                  </div>
+                </>
+              )}
+            </NavLink>
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -26,7 +26,6 @@ export default function Profil({ user }) {
     }
   };
 
-  // Ստուգում ենք user-ի առկայությունը և վերցնում իրական անունն ու նկարը
   const currentUser = user || auth.currentUser;
   const displayName = currentUser?.displayName || currentUser?.email?.split("@")[0] || "Օգտատեր";
   const profileImage = currentUser?.photoURL;
@@ -35,10 +34,10 @@ export default function Profil({ user }) {
   return (
     <div className="flex min-h-[calc(100vh-100px)] font-sans bg-[#f4f6f9] p-6 gap-6 overflow-hidden">
       
-      {/* Ձախ կողմի մենյու */}
+
       <div className="w-[340px] bg-white border border-[#e2e8f0] rounded-2xl flex flex-col justify-between shrink-0 shadow-sm z-10 overflow-y-auto">
         <div>
-          {/* 🌟 ԻՐԱԿԱՆ ՕԳՏԱՏԻՐՈՋ ՆԿԱՐ ԵՎ ԱՆՈՒՆ */}
+
           <div className="p-5 border-b border-[#e2e8f0] flex items-center gap-3.5 bg-gradient-to-br from-slate-50 to-white">
             {profileImage ? (
               <img 
@@ -162,7 +161,7 @@ export default function Profil({ user }) {
         </div>
       </div>
 
-      {/* Աջ կողմի բովանդակություն */}
+
       <div className="flex-1 bg-[url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1400&q=80')] bg-cover bg-center rounded-2xl flex flex-col relative overflow-y-auto shadow-sm border border-[#e2e8f0]">
         
         <div className="p-8 max-w-[800px] flex flex-col gap-6">

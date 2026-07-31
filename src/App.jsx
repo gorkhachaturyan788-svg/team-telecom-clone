@@ -47,8 +47,7 @@ function Layout() {
         <Route path="/tariffs" element={<Mobile />} />
         <Route path="/tariffs/mobile" element={<Mobile />} />
         <Route path="/tariffs/fixed" element={<FiqsvacHeraxosakap />} />
-        <Route path="/tariffs/combo" element={<FiqsvacHeraxosakap />} />
-        <Route path="/landline-tariffs" element={<FiqsvacHeraxosakap />} />
+      
         
         <Route path="/account" element={<Profil user={user} />} /> 
         
