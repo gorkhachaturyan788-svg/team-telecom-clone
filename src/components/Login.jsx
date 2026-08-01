@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate, Link } from "react-router-dom"; 
 import { 
   GoogleAuthProvider, 
   signInWithPopup, 
@@ -48,6 +48,7 @@ export default function AuthPage() {
     setError("");
     try {
       const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: "select_account" });
       const result = await signInWithPopup(auth, provider);
       const loggedUser = result.user;
 
@@ -113,8 +114,20 @@ export default function AuthPage() {
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen font-sans bg-[#f4f6f9]">
-      <div className="w-full lg:w-[40%] min-w-0 lg:min-w-[400px] flex flex-col justify-between items-center py-10 px-5 box-border">
-        <div className="flex gap-10 mb-[30px]">
+      <div className="w-full lg:w-[40%] min-w-0 lg:min-w-[400px] flex flex-col justify-between items-center py-10 px-5 box-border relative">
+        
+        {/* Լոգոն ձախ անկյունի վերևում */}
+        <div className="absolute top-5 left-5">
+          <Link to="/">
+            <img 
+              src="https://www.telecomarmenia.am/img/fb-share.png?v=2" 
+              alt="Logo" 
+              className="w-[120px] object-contain cursor-pointer"
+            />
+          </Link>
+        </div>
+
+        <div className="flex gap-10 mt-8 mb-[30px]">
           <button 
             type="button"
             onClick={() => setActiveTab("individuals")}
