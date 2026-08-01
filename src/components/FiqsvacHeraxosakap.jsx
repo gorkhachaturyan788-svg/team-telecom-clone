@@ -1,7 +1,7 @@
-import React, { useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import React from "react";
+import { NavLink } from "react-router-dom";
 
-export default function HomeBanner() {
+export default function  FiqsvacHeraxosakap () {
   const navItems = [
     { 
       title: "Բջջային կապ", 
@@ -9,19 +9,19 @@ export default function HomeBanner() {
       path: "/tariffs/mobile" 
     },
     { 
-      title: "Ինտերնետ և TV - ԿՈՄՄՈ", 
-      icon: "https://www.telecomarmenia.am/files/icons/1/16511223989344/45x45.png", 
-      path: "/tariffs/combo" 
-    },
-    { 
       title: "Ինտերնետ և TV - ԿՈՄԲՈ", 
       icon: "https://www.telecomarmenia.am/files/icons/1/16511223989344/45x45.png", 
-      path: "/tariffs/combi" 
+      path: "/tariffs/combo" 
     },
     { 
       title: "Ֆիքսված հեռախոսակապ", 
       icon: "https://www.telecomarmenia.am/files/icons/1/16510709622802/45x45.png", 
       path: "/tariffs/fixed" 
+    },
+    { 
+      title: "Այլ ծառայություններ", 
+      icon: "https://www.telecomarmenia.am/files/icons/1/1651070448779/45x45.png", 
+      path: "/tariffs/other" 
     },
   ];
 
@@ -43,6 +43,7 @@ export default function HomeBanner() {
           <div className="ml-auto">
             <div className="inline-flex items-center bg-[#ff4d4f] text-white rounded-full shadow-lg overflow-hidden border border-white/30">
               <div className="px-5 py-2 text-xs md:text-sm font-semibold tracking-wide flex items-center gap-2">
+                Առաջարկներ
               </div>
             </div>
           </div>

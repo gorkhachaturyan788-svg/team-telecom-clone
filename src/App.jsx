@@ -7,7 +7,7 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Login from "./components/Login";
 import Mobile from "./components/Mobile"; 
-import FiqsvacHeraxosakap from "./components/FiqsvacHeraxosakap"; 
+import TariffsFixed from "./pages/TariffsFixed"; 
 
 import Home from "./pages/Home";
 import Eshop from "./pages/Eshop";
@@ -43,11 +43,9 @@ function Layout() {
         <Route path="/eshop" element={<Eshop />} />
         <Route path="/login" element={<Login />} />
         
-   
         <Route path="/tariffs" element={<Mobile />} />
         <Route path="/tariffs/mobile" element={<Mobile />} />
-        <Route path="/tariffs/fixed" element={<FiqsvacHeraxosakap />} />
-      
+        <Route path="/tariffs/fixed" element={<TariffsFixed />} />
         
         <Route path="/account" element={<Profil user={user} />} /> 
         
