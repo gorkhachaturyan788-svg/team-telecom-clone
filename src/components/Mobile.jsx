@@ -10,7 +10,7 @@ export default function Mobile() {
       path: "/tariffs/mobile" 
     },
     { 
-      title: "Ինտերնետ և TV - ԿՈՄՄՈ", 
+      title: "Ինտերնետ և TV - ԿՈՄԲՈ", 
       icon: "https://www.telecomarmenia.am/files/icons/1/16511223989344/45x45.png", 
       path: "/tariffs/combo" 
     },

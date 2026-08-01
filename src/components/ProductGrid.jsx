@@ -26,10 +26,18 @@ export default function ProductGrid() {
     fetchProducts();
   }, []);
 
-  if (loading) return <div className="text-center py-10">Loading...</div>;
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-20">
+        <div className="text-gray-500 font-semibold text-lg animate-pulse">
+          Բեռնվում է...
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <section className="max-w-7xl mx-auto py-10 px-4">
+    <section className="max-w-7xl mx-auto py-12 px-6 sm:px-10">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {products.map((product) => (
           <ProductCard key={product.id} product={product} />

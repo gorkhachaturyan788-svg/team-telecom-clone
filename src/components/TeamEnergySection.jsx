@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 export default function TeamEnergySection() {
   return (
-    <div className="py-[60px] max-w-7xl mx-auto px-4">
+    <div className="py-[60px] max-w-7xl mx-auto px-4 overflow-hidden">
       <h2 className="text-[32px] text-[#1b2d46] mb-10 font-bold">
         Այլ հավելվածներ
       </h2>

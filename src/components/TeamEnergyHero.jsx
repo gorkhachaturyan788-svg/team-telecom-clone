@@ -3,7 +3,7 @@ import { Star } from "lucide-react";
 
 export default function TeamEnergyHero() {
   return (
-    <div className="mb-[60px] flex flex-col md:flex-row items-center md:items-start gap-8 max-w-7xl mx-auto px-4">
+    <div className="mb-[60px] flex flex-col md:flex-row items-center md:items-start gap-8 max-w-7xl mx-auto px-4 overflow-hidden">
       <div className="w-[240px] h-[240px] bg-[#0f4965] rounded-[18px] flex justify-center items-center shrink-0 shadow-md">
         <img 
           src="https://www.telecomarmenia.am/images/team_apps/1/17116228874075.png" 

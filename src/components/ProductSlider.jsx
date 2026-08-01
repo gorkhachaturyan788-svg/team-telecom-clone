@@ -31,17 +31,25 @@ export default function ProductSlider() {
     fetchProducts();
   }, []);
 
-  if (loading) return <div className="text-center py-10">Loading...</div>;
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-20">
+        <div className="text-gray-500 font-semibold text-lg animate-pulse">
+          Բեռնվում է...
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <section className="max-w-7xl mx-auto py-10 px-4 relative">
-      <h2 className="text-3xl font-bold mb-6 text-[#002d56]">Մեր Արտադրյալներ</h2>
+    <section className="max-w-7xl mx-auto py-12 px-6 sm:px-10 relative">
+      <h2 className="text-3xl font-black mb-8 text-[#002d56]">Մեր Արտադրյալներ</h2>
       
       <Swiper
         modules={[Navigation, Pagination]}
         navigation
         pagination={{ clickable: true }}
-        spaceBetween={20}
+        spaceBetween={24}
         slidesPerView={1}
         breakpoints={{
           640: {
@@ -57,8 +65,10 @@ export default function ProductSlider() {
         className="pb-14"
       >
         {products.map((product) => (
-          <SwiperSlide key={product.id} className="h-auto">
-            <ProductCard product={product} />
+          <SwiperSlide key={product.id} className="h-auto flex">
+            <div className="w-full">
+              <ProductCard product={product} />
+            </div>
           </SwiperSlide>
         ))}
       </Swiper>

@@ -13,7 +13,7 @@ import { auth, db } from "../firebase";
 export default function AuthPage() {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const navigate = useNavigate(); // Ավելացվել է
+  const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState("individuals");
   const [showPassword, setShowPassword] = useState(false);
@@ -32,7 +32,6 @@ export default function AuthPage() {
     return () => unsubscribe();
   }, []);
 
- 
   useEffect(() => {
     if (user) {
       navigate("/account");

@@ -8,7 +8,7 @@ export default function TeamTVGallery() {
   ];
 
   return (
-    <div className="flex items-center gap-5 overflow-x-auto pb-4 max-w-7xl mx-auto px-4">
+    <div className="flex items-center gap-5 overflow-x-auto pb-4 max-w-7xl mx-auto px-4 overflow-hidden">
       {screenshots.map((src, index) => (
         <img
           key={index}

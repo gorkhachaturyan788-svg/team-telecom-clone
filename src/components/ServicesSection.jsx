@@ -47,30 +47,33 @@ export default function ServicesSection() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="py-20 px-6 bg-white overflow-hidden">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+    <section ref={sectionRef} className="py-12 sm:py-20 px-4 sm:px-6 bg-white overflow-hidden">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
         {services.map((service, index) => (
           <div
             key={service.id}
-            className={`bg-[#f4f4f4] rounded-[40px] p-10 h-[300px] flex items-center justify-between shadow-lg transition-all duration-700 ease-out
+            className={`bg-[#f4f4f4] rounded-[30px] sm:rounded-[40px] p-6 sm:p-10 min-h-[260px] sm:h-[300px] flex flex-col sm:flex-row items-center justify-between shadow-lg transition-all duration-700 ease-out
               ${
                 isVisible
                   ? "opacity-100 translate-x-0 scale-100"
-                  : index % 2 === 0
-                  ? "-translate-x-20 opacity-0 scale-95"
-                  : "translate-x-20 opacity-0 scale-95"
+                  : "max-[550px]:opacity-0 max-[550px]:translate-y-10 max-[550px]:scale-95 " +
+                    (index % 2 === 0
+                      ? "md:-translate-x-20 md:opacity-0 md:scale-95"
+                      : "md:translate-x-20 md:opacity-0 md:scale-95")
               }`}
           >
-            <div className="space-y-4">
-              <h3 className="text-3xl font-black text-blue-950">
+  
+            <div className="space-y-3 sm:space-y-4 text-center sm:text-left w-full sm:w-auto">
+              <h3 className="text-2xl sm:text-3xl font-black text-blue-950">
                 {service.title}
               </h3>
-              <button className="text-orange-600 text-lg font-bold hover:underline">
+              <button className="text-orange-600 text-base sm:text-lg font-bold hover:underline">
                 Ավելին ›
               </button>
             </div>
 
-            <div className="w-52 h-52 flex items-center justify-center shrink-0">
+            {/* Նկարի մաս */}
+            <div className="w-36 h-36 sm:w-52 sm:h-52 flex items-center justify-center shrink-0 mt-4 sm:mt-0">
               <img
                 src={service.img}
                 alt={service.title}

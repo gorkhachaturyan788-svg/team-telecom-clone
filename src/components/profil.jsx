@@ -32,12 +32,12 @@ export default function Profil({ user }) {
   const initial = displayName.charAt(0).toUpperCase();
 
   return (
-    <div className="flex min-h-[calc(100vh-100px)] font-sans bg-[#f4f6f9] p-6 gap-6 overflow-hidden">
+    <div className="flex flex-col lg:flex-row min-h-[calc(100vh-100px)] font-sans bg-[#f4f6f9] p-4 sm:p-6 gap-6">
       
-
-      <div className="w-[340px] bg-white border border-[#e2e8f0] rounded-2xl flex flex-col justify-between shrink-0 shadow-sm z-10 overflow-y-auto">
+      {/* Sidebar */}
+      <div className="w-full lg:w-[340px] bg-white border border-[#e2e8f0] rounded-2xl flex flex-col justify-between shrink-0 shadow-sm z-10 overflow-hidden">
         <div>
-
+          {/* User Info Header */}
           <div className="p-5 border-b border-[#e2e8f0] flex items-center gap-3.5 bg-gradient-to-br from-slate-50 to-white">
             {profileImage ? (
               <img 
@@ -60,11 +60,13 @@ export default function Profil({ user }) {
             </div>
           </div>
 
+          {/* Balance */}
           <div className="p-5 border-b border-[#e2e8f0] bg-[#fafbfc]">
             <p className="text-[12px] text-[#64748b] mb-1">Հիմնական հաշիվ</p>
-            <p className="text-[20px] font-bold text-[#0f172a]">0 ֏</p>
+            <p className="text-[20px] font-bold text-[#0f172a]">0 <span className="text-sm font-normal text-gray-500">֏</span></p>
           </div>
 
+          {/* Navigation Menu */}
           <div className="py-2">
             <button 
               onClick={() => setActiveMenu("data")}
@@ -99,7 +101,9 @@ export default function Profil({ user }) {
 
             <button 
               onClick={() => setActiveMenu("tariffs")}
-              className="w-full flex items-center justify-between px-5 py-3 text-[14px] text-[#475569] hover:bg-gray-50 transition-colors"
+              className={`w-full flex items-center justify-between px-5 py-3 text-[14px] transition-colors ${
+                activeMenu === "tariffs" ? "bg-[#f1f5f9] text-[#0f172a] font-semibold border-l-4 border-[#00bcd4]" : "text-[#475569] hover:bg-gray-50"
+              }`}
             >
               <div className="flex items-center gap-3">
                 <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -112,7 +116,9 @@ export default function Profil({ user }) {
 
             <button 
               onClick={() => setActiveMenu("services")}
-              className="w-full flex items-center justify-between px-5 py-3 text-[14px] text-[#475569] hover:bg-gray-50 transition-colors"
+              className={`w-full flex items-center justify-between px-5 py-3 text-[14px] transition-colors ${
+                activeMenu === "services" ? "bg-[#f1f5f9] text-[#0f172a] font-semibold border-l-4 border-[#00bcd4]" : "text-[#475569] hover:bg-gray-50"
+              }`}
             >
               <div className="flex items-center gap-3">
                 <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -125,7 +131,9 @@ export default function Profil({ user }) {
 
             <button 
               onClick={() => setActiveMenu("bonus")}
-              className="w-full flex items-center justify-between px-5 py-3 text-[14px] text-[#475569] hover:bg-gray-50 transition-colors"
+              className={`w-full flex items-center justify-between px-5 py-3 text-[14px] transition-colors ${
+                activeMenu === "bonus" ? "bg-[#f1f5f9] text-[#0f172a] font-semibold border-l-4 border-[#00bcd4]" : "text-[#475569] hover:bg-gray-50"
+              }`}
             >
               <div className="flex items-center gap-3">
                 <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -138,7 +146,9 @@ export default function Profil({ user }) {
 
             <button 
               onClick={() => setActiveMenu("help")}
-              className="w-full flex items-center justify-between px-5 py-3 text-[14px] text-[#475569] hover:bg-gray-50 transition-colors"
+              className={`w-full flex items-center justify-between px-5 py-3 text-[14px] transition-colors ${
+                activeMenu === "help" ? "bg-[#f1f5f9] text-[#0f172a] font-semibold border-l-4 border-[#00bcd4]" : "text-[#475569] hover:bg-gray-50"
+              }`}
             >
               <div className="flex items-center gap-3">
                 <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -151,6 +161,7 @@ export default function Profil({ user }) {
           </div>
         </div>
 
+        {/* Logout Button */}
         <div className="p-5 border-t border-[#e2e8f0]">
           <button 
             onClick={handleLogout}
@@ -161,10 +172,11 @@ export default function Profil({ user }) {
         </div>
       </div>
 
-
-      <div className="flex-1 bg-[url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1400&q=80')] bg-cover bg-center rounded-2xl flex flex-col relative overflow-y-auto shadow-sm border border-[#e2e8f0]">
-        
-        <div className="p-8 max-w-[800px] flex flex-col gap-6">
+      {/* Main Content Area */}
+      <div className="flex-1 bg-[url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1400&q=80')] bg-cover bg-center rounded-2xl flex flex-col relative shadow-sm border border-[#e2e8f0] p-6 sm:p-8 overflow-y-auto">
+        <div className="max-w-[800px] w-full flex flex-col gap-6">
+          
+          {/* Section 1 */}
           <div className="bg-white rounded-2xl shadow-lg border border-white/40 overflow-hidden">
             <div className="bg-gray-50/80 px-6 py-4 border-b border-gray-100 flex items-center gap-2.5">
               <svg width="20" height="20" fill="none" stroke="#334155" strokeWidth="2" viewBox="0 0 24 24">
@@ -176,7 +188,7 @@ export default function Profil({ user }) {
             <div className="p-6 flex flex-col gap-5">
               <div className="flex items-center justify-between pb-4 border-b border-gray-100">
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-[#00bcd4]">
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-[#00bcd4] shrink-0">
                     <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
                     </svg>
@@ -190,7 +202,7 @@ export default function Profil({ user }) {
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-500">
+                  <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-500 shrink-0">
                     <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -204,6 +216,7 @@ export default function Profil({ user }) {
             </div>
           </div>
 
+          {/* Section 2 */}
           <div className="bg-white rounded-2xl shadow-lg border border-white/40 overflow-hidden">
             <div className="bg-gray-50/80 px-6 py-4 border-b border-gray-100 flex items-center gap-2.5">
               <svg width="20" height="20" fill="none" stroke="#334155" strokeWidth="2" viewBox="0 0 24 24">
@@ -216,8 +229,8 @@ export default function Profil({ user }) {
               <p className="text-[#eb5353] text-[14px] font-medium">Ծառայություններն անհասանելի են այլ օպերատորների համար</p>
             </div>
           </div>
-        </div>
 
+        </div>
       </div>
     </div>
   );

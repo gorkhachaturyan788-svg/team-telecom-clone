@@ -8,7 +8,7 @@ export default function TeamEnergyGallery() {
   ];
 
   return (
-    <div className="py-10 text-left max-w-7xl mx-auto px-4">
+    <div className="py-10 text-left max-w-7xl mx-auto px-4 overflow-hidden">
       <h2 className="text-2xl text-[#1b2d46] mb-6 font-bold">
         iOS
       </h2>

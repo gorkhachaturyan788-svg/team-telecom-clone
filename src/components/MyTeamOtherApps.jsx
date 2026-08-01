@@ -8,7 +8,7 @@ export default function MyTeamOtherApps() {
       </h2>
       
       <div className="flex flex-col lg:flex-row gap-[40px]">
-        <div className="flex items-start gap-[25px]">
+        <div className="flex flex-col sm:flex-row items-start gap-[25px] flex-1">
           <img 
             src="https://www.telecomarmenia.am/images/team_apps/1/17249416402556.png" 
             alt="TeamTV" 
@@ -29,7 +29,7 @@ export default function MyTeamOtherApps() {
           </div>
         </div>
 
-        <div className="flex items-start gap-[25px]">
+        <div className="flex flex-col sm:flex-row items-start gap-[25px] flex-1">
           <img 
             src="https://www.telecomarmenia.am/images/team_apps/1/17691688001842.png" 
             alt="Team Energy" 

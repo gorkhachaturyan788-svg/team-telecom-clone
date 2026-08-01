@@ -3,7 +3,7 @@ import { Star } from "lucide-react";
 
 export default function TeamPayHero() {
   return (
-    <div className="mb-[60px] p-5 max-w-7xl mx-auto">
+    <div className="mb-[60px] p-5 max-w-7xl mx-auto overflow-hidden">
       <div className="flex flex-col md:flex-row items-center md:items-start gap-10">
         <div className="w-[240px] h-[240px] bg-[#2fb5c7] rounded-[20px] flex justify-center items-center shrink-0 shadow-md">
            <span className="text-white text-[60px] font-bold">≠</span>

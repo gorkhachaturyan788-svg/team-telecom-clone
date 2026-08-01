@@ -1,6 +1,6 @@
 export default function TransferNumberForm() {
     return (
-        <section className="bg-[#00263a] py-20 px-6 sm:px-10 md:px-[10%] text-center text-white">
+        <section className="bg-[#00263a] py-20 px-6 sm:px-10 md:px-[10%] text-center text-white overflow-hidden">
             <h2 className="text-4xl font-bold mb-6">ՏԵՂԱՓՈԽՎԵ՛Ք TEAM ՁԵՐ ՀԱՄԱՐՈՎ</h2>
             <p className="text-lg text-gray-300 mb-12 max-w-2xl mx-auto">
                 Դարձե՛ք Team բաժանորդ, օգտվեք ցանցի առավելություններից՝ պահելով Ձեր բջջային հեռախոսի համարը:

@@ -35,7 +35,7 @@ export default function NewsSection() {
               {slideNews.map((item, i) => (
                 <div key={i} className="flex flex-col h-full">
                   <div className="overflow-hidden rounded-2xl mb-4 h-48">
-                    <img src={item.img} alt={item.title} className="w-full h-full object-cover" />
+                    <img src={item.img} alt={item.title} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
                   </div>
                   <p className="text-xs text-gray-400 mb-2 font-medium uppercase">{item.date}</p>
                   <h3 className="text-[17px] font-bold text-[#002d56] leading-tight text-justify">
