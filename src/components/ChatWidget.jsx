@@ -1,6 +1,15 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { MessageCircle, X, Send, Mic, Square, Trash2 } from "lucide-react";
+import {
+  MessageCircle,
+  X,
+  Send,
+  Mic,
+  Square,
+  Trash2,
+  Users,
+  ArrowLeft,
+} from "lucide-react";
 
 import {
   doc,
@@ -16,9 +25,6 @@ import {
 
 import { db } from "../firebase";
 
-
-
-
 const COLORS = {
   accent: "#5b4bff",
   accentDark: "#4636d1",
@@ -30,68 +36,83 @@ const COLORS = {
   bubbleBot: "#f0eefc",
 };
 
+// Ֆունկցիա երկու օգտատերերի համար միասնական Chat Room ID ստեղծելու համար
+function getChatRoomId(uid1, uid2) {
+  return [uid1, uid2].sort().join("_");
+}
+
 async function uploadToCloudinary(audioBlob) {
   const formData = new FormData();
-
   formData.append("file", audioBlob);
   formData.append("upload_preset", "voice_upload");
 
   const res = await fetch(
     "https://api.cloudinary.com/v1_1/t0eyfav7/video/upload",
-    {
-      method: "POST",
-      body: formData,
-    }
+    { method: "POST", body: formData }
   );
 
   const data = await res.json();
-
-  if (!data.secure_url) {
-    console.log(data);
-    throw new Error("Cloudinary upload failed");
-  }
-
+  if (!data.secure_url) throw new Error("Cloudinary upload failed");
   return data.secure_url;
 }
 
-
-export default function ChatWidget({ user }) {
+export default function DirectChatWidget({ user }) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  
+  const [allUsers, setAllUsers] = useState([]); // Բոլոր օգտատերերի ցանկը
+  const [activePartner, setActivePartner] = useState(null); // Ընտրված զրուցակիցը
+  
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [recording, setRecording] = useState(false);
   const [uploading, setUploading] = useState(false);
+
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const bodyRef = useRef(null);
 
   const isLoggedIn = !!user;
 
-  const currentUser = isLoggedIn
-    ? {
-      name: user.displayName || user.email?.split("@")[0] || "Օգտատեր",
-      email: user.email || "",
-    }
-    : null;
-
+  // 1. Գրանցում ենք ընթացիկ օգտատիրոջը "users" collection-ում
   useEffect(() => {
-    if (!isLoggedIn) {
-      setMessages([]);
-      return;
-    }
+    if (!isLoggedIn || !user?.uid) return;
 
     setDoc(
-      doc(db, "chats", user.uid),
+      doc(db, "users", user.uid),
       {
-        name: currentUser.name,
-        email: currentUser.email,
+        uid: user.uid,
+        name: user.displayName || user.email?.split("@")[0] || "Օգտատեր",
+        email: user.email || "",
         updatedAt: serverTimestamp(),
       },
       { merge: true }
     );
+  }, [isLoggedIn, user]);
 
-    const messagesRef = collection(db, "chats", user.uid, "messages");
+  // 2. Բերում ենք մյուս ԲՈԼՈՐ օգտատերերին, որպեսզի կարողանանք ընտրել ում հետ խոսել
+  useEffect(() => {
+    if (!isLoggedIn || !user?.uid) return;
+
+    const unsubscribe = onSnapshot(collection(db, "users"), (snapshot) => {
+      const usersList = snapshot.docs
+        .map((d) => d.data())
+        .filter((u) => u.uid !== user.uid); // Բացառում ենք ինքներս մեզ
+      setAllUsers(usersList);
+    });
+
+    return () => unsubscribe();
+  }, [isLoggedIn, user?.uid]);
+
+  // 3. Լսում ենք ընտրված զրուցակցի հետ չաթի հաղորդագրությունները
+  useEffect(() => {
+    if (!isLoggedIn || !user?.uid || !activePartner) {
+      setMessages([]);
+      return;
+    }
+
+    const roomId = getChatRoomId(user.uid, activePartner.uid);
+    const messagesRef = collection(db, "direct_chats", roomId, "messages");
     const q = query(messagesRef, orderBy("createdAt", "asc"));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -100,7 +121,7 @@ export default function ChatWidget({ user }) {
     });
 
     return () => unsubscribe();
-  }, [isLoggedIn, user?.uid]);
+  }, [isLoggedIn, user?.uid, activePartner]);
 
   useEffect(() => {
     if (bodyRef.current) {
@@ -108,81 +129,62 @@ export default function ChatWidget({ user }) {
     }
   }, [messages, open]);
 
-
+  // Հաղորդագրություն ջնջել
   async function deleteMessage(messageId) {
-    if (!isLoggedIn) return;
+    if (!isLoggedIn || !user?.uid || !activePartner) return;
+    const roomId = getChatRoomId(user.uid, activePartner.uid);
 
     try {
-      await deleteDoc(
-        doc(db, "chats", user.uid, "messages", messageId)
-      );
+      await deleteDoc(doc(db, "direct_chats", roomId, "messages", messageId));
     } catch (err) {
       console.error(err);
     }
   }
 
+  // Տեքստային հաղորդագրություն ուղարկել
   async function sendTextMessage() {
     const text = input.trim();
-    if (!text || !isLoggedIn) return;
+    if (!text || !isLoggedIn || !user?.uid || !activePartner) return;
     setInput("");
 
-    const messagesRef = collection(db, "chats", user.uid, "messages");
+    const roomId = getChatRoomId(user.uid, activePartner.uid);
+    const messagesRef = collection(db, "direct_chats", roomId, "messages");
+
     await addDoc(messagesRef, {
       type: "text",
       text,
-      sender: "user",
+      senderUid: user.uid,
+      senderName: user.displayName || user.email?.split("@")[0] || "Օգտատեր",
       createdAt: serverTimestamp(),
     });
-
-    await setDoc(
-      doc(db, "chats", user.uid),
-      { lastMessage: text, updatedAt: serverTimestamp() },
-      { merge: true }
-    );
   }
 
-
+  // Ձայնային հաղորդագրություն ուղարկել
   async function sendVoiceMessage(audioBlob) {
-    if (!isLoggedIn) return;
-
+    if (!isLoggedIn || !user?.uid || !activePartner) return;
     setUploading(true);
 
     try {
       const audioUrl = await uploadToCloudinary(audioBlob);
+      const roomId = getChatRoomId(user.uid, activePartner.uid);
 
-      await addDoc(
-        collection(db, "chats", user.uid, "messages"),
-        {
-          type: "audio",
-          audioUrl,
-          sender: "user",
-          createdAt: serverTimestamp(),
-        }
-      );
-
-      await setDoc(
-        doc(db, "chats", user.uid),
-        {
-          lastMessage: "🎤 Ձայնային հաղորդագրություն",
-          updatedAt: serverTimestamp(),
-        },
-        { merge: true }
-      );
-
+      await addDoc(collection(db, "direct_chats", roomId, "messages"), {
+        type: "audio",
+        audioUrl,
+        senderUid: user.uid,
+        createdAt: serverTimestamp(),
+      });
     } catch (err) {
       console.error(err);
-      alert("Voice upload error");
+      alert("Ձայնային հաղորդագրությունը չուղարկվեց:");
     } finally {
       setUploading(false);
     }
   }
 
-
   async function toggleMic() {
     if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
-      alert(
-        "Ձեր բրաուզերը ձայնագրման աջակցություն չունի։ Խորհուրդ ենք տալիս Chrome կամ Edge։"
-      );
+      alert("Ձեր բրաուզերը ձայնագրման աջակցություն չունի։");
       return;
     }
 
@@ -203,25 +205,21 @@ export default function ChatWidget({ user }) {
 
       mediaRecorder.onstop = async () => {
         stream.getTracks().forEach((track) => track.stop());
-        const audioBlob = new Blob(audioChunksRef.current, {
-          type: "audio/webm",
-        });
-        if (audioBlob.size > 0) {
-          await sendVoiceMessage(audioBlob);
-        }
+        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        if (audioBlob.size > 0) await sendVoiceMessage(audioBlob);
       };
 
       mediaRecorder.start();
       mediaRecorderRef.current = mediaRecorder;
       setRecording(true);
     } catch (err) {
-      alert("Խնդրում ենք թույլատրել մկրոֆոնի օգտագործումը բրաուզերում։");
+      alert("Խնդրում ենք թույլատրել միկրոֆոնի օգտագործումը։");
     }
   }
 
   return (
     <div style={{ fontFamily: "Segoe UI, Arial, sans-serif" }}>
-
+      {/* Բացել / Փակել կոճակ */}
       <button
         onClick={() => setOpen((o) => !o)}
         aria-label="Բացել չաթը"
@@ -231,144 +229,147 @@ export default function ChatWidget({ user }) {
           boxShadow: "0 8px 24px rgba(91,75,255,0.35)",
         }}
       >
-        {open ? (
-          <X color="#fff" size={30} />
-        ) : (
-          <MessageCircle color="#fff" size={32} />
-        )}
+        {open ? <X color="#fff" size={30} /> : <MessageCircle color="#fff" size={32} />}
       </button>
-
 
       {open && (
         <div
-          className="fixed bottom-24 right-6 w-[300px] h-[450px] rounded-2xl flex flex-col overflow-hidden z-50"
+          className="fixed bottom-24 right-6 w-[330px] h-[480px] rounded-2xl flex flex-col overflow-hidden z-50"
           style={{
             background: COLORS.bgPanel,
             boxShadow: "0 16px 48px rgba(30,27,46,0.18)",
           }}
         >
-
+          {/* Header */}
           <div
-            className="flex items-center gap-3 px-4 py-3"
+            className="flex items-center gap-2 px-4 py-3 text-white"
             style={{
               background: `linear-gradient(120deg, ${COLORS.accent}, ${COLORS.accentDark})`,
-              color: "#fff",
             }}
           >
-            <div
-              className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 font-semibold text-sm"
-              style={{ background: "rgba(255,255,255,0.22)" }}
-            >
-              {isLoggedIn ? currentUser.name.charAt(0).toUpperCase() : "?"}
-            </div>
+            {activePartner ? (
+              <button
+                onClick={() => setActivePartner(null)}
+                className="bg-transparent border-0 text-white cursor-pointer p-0 mr-1"
+                title="Հետ"
+              >
+                <ArrowLeft size={20} />
+              </button>
+            ) : null}
+
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-semibold leading-tight">
-                {isLoggedIn ? currentUser.name : "Բարև, հյուր"}
+              <div className="text-sm font-semibold truncate">
+                {activePartner ? activePartner.name : "Ընտրեք օգտատեր"}
               </div>
-              {isLoggedIn && (
-                <div className="text-xs opacity-85 leading-tight truncate">
-                  {currentUser.email}
-                </div>
-              )}
+              <div className="text-xs opacity-80 truncate">
+                {activePartner ? activePartner.email : "Օգտատերերի ցանկ"}
+              </div>
             </div>
+
             <button
               onClick={() => setOpen(false)}
-              aria-label="Փակել"
-              className="border-0 bg-transparent cursor-pointer opacity-85"
-              style={{ color: "#fff" }}
+              className="border-0 bg-transparent cursor-pointer text-white opacity-80"
             >
               <X size={18} />
             </button>
           </div>
 
-          {!isLoggedIn && (
-            <div className="flex-1 flex flex-col items-center justify-center gap-3 px-5 py-7 text-center">
+          {!isLoggedIn ? (
+            <div className="flex-1 flex flex-col items-center justify-center gap-3 px-5 text-center">
               <p className="text-sm m-0" style={{ color: COLORS.textSoft }}>
-                Չաթից օգտվելու համար անհրաժեշտ է մուտք գործել կամ գրանցվել։
+                Մյուսների հետ շփվելու համար անհրաժեշտ է մուտք գործել։
               </p>
               <button
                 onClick={() => {
                   setOpen(false);
                   navigate("/login");
                 }}
-                className="border-0 rounded-lg px-5 py-2 text-sm font-semibold cursor-pointer"
-                style={{ background: COLORS.accent, color: "#fff" }}
+                className="border-0 rounded-lg px-5 py-2 text-sm font-semibold cursor-pointer text-white"
+                style={{ background: COLORS.accent }}
               >
                 Մուտք գործել
               </button>
             </div>
-          )}
-
-          {isLoggedIn && (
+          ) : !activePartner ? (
+            /* ԷԿՐԱՆ 1: Օգտատերերի ցանկը */
+            <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2">
+              <div className="text-xs font-semibold px-1 text-gray-500 flex items-center gap-1">
+                <Users size={14} /> Ակտիվ օգտատերեր ({allUsers.length})
+              </div>
+              {allUsers.length === 0 ? (
+                <div className="text-xs text-center mt-6 text-gray-400">
+                  Ուրիշ օգտատերեր դեռ չկան:
+                </div>
+              ) : (
+                allUsers.map((u) => (
+                  <div
+                    key={u.uid}
+                    onClick={() => setActivePartner(u)}
+                    className="flex items-center gap-3 p-2.5 rounded-xl border border-gray-100 hover:bg-indigo-50 cursor-pointer transition-all"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs">
+                      {u.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-gray-800 truncate">
+                        {u.name}
+                      </div>
+                      <div className="text-xs text-gray-400 truncate">{u.email}</div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          ) : (
+            /* ԷԿՐԱՆ 2: Զրույց ընտրված օգտատիրոջ հետ */
             <div className="flex flex-col flex-1 min-h-0">
               <div
                 ref={bodyRef}
                 className="flex-1 overflow-y-auto flex flex-col gap-2 px-3 py-3 text-sm"
               >
                 {messages.length === 0 && (
-                  <div
-                    className="text-xs text-center mt-4"
-                    style={{ color: COLORS.textSoft }}
-                  >
-                    Գրեք կամ ձայնագրեք Ձեր առաջին հաղորդագրությունը 👋
+                  <div className="text-xs text-center mt-4" style={{ color: COLORS.textSoft }}>
+                    Գրեք Ձեր առաջին հաղորդագրությունը {activePartner.name}-ին 👋
                   </div>
                 )}
-                {messages.map((m) => (
-                  <div
-                    key={m.id}
-                    className="max-w-[78%] rounded-2xl leading-snug"
-                    style={{
-                      alignSelf:
-                        m.sender === "user" ? "flex-end" : "flex-start",
-                      background:
-                        m.sender === "user" ? COLORS.accent : COLORS.bubbleBot,
-                      color: m.sender === "user" ? "#fff" : COLORS.textMain,
-                      borderBottomRightRadius:
-                        m.sender === "user" ? 4 : undefined,
-                      borderBottomLeftRadius:
-                        m.sender === "admin" ? 4 : undefined,
-                      padding: m.type === "audio" ? "6px 8px" : "9px 12px",
-                    }}
-                  >
-                    {m.type === "audio" ? (
-                      <audio
-                        controls
-                        src={m.audioUrl}
-                        style={{ width: 190, height: 32, display: "block" }}
-                      />
-                    ) : (
-                      m.text
-                    )}
-
-                    <button
-                      onClick={() => deleteMessage(m.id)}
-                      title="Ջնջել"
+                {messages.map((m) => {
+                  const isMe = m.senderUid === user.uid;
+                  return (
+                    <div
+                      key={m.id}
+                      className="max-w-[78%] rounded-2xl leading-snug p-2.5 flex flex-col"
                       style={{
-                        marginTop: "6px",
-                        background: "transparent",
-                        border: "none",
-                        color: "#ffb3b3",
-                        cursor: "pointer",
-                        padding: "2px",
-                        display: "flex",
-                        alignItems: "center",
+                        alignSelf: isMe ? "flex-end" : "flex-start",
+                        background: isMe ? COLORS.accent : COLORS.bubbleBot,
+                        color: isMe ? "#fff" : COLORS.textMain,
+                        borderBottomRightRadius: isMe ? 4 : undefined,
+                        borderBottomLeftRadius: !isMe ? 4 : undefined,
                       }}
                     >
-                      <Trash2 size={15} />
-                    </button>
-
-                  </div>
-                ))}
+                      {m.type === "audio" ? (
+                        <audio controls src={m.audioUrl} style={{ width: 180, height: 32 }} />
+                      ) : (
+                        <span>{m.text}</span>
+                      )}
+                      {isMe && (
+                        <button
+                          onClick={() => deleteMessage(m.id)}
+                          className="self-end mt-1 bg-transparent border-0 cursor-pointer opacity-60 hover:opacity-100 text-red-200"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
                 {uploading && (
-                  <div
-                    className="text-xs self-end"
-                    style={{ color: COLORS.textSoft }}
-                  >
-                    Ձայնագրությունն ուղարկվում է...
+                  <div className="text-xs self-end" style={{ color: COLORS.textSoft }}>
+                    Ուղարկվում է...
                   </div>
                 )}
               </div>
 
+              {/* Input section */}
               <div
                 className="flex items-center gap-2 p-2"
                 style={{ borderTop: `1px solid ${COLORS.border}` }}
@@ -376,12 +377,10 @@ export default function ChatWidget({ user }) {
                 <button
                   onClick={toggleMic}
                   disabled={uploading}
-                  aria-label={recording ? "Կանգնեցնել ձայնագրումը" : "Ձայնագրել հաղորդագրություն"}
-                  className="w-9 h-9 rounded-full border-0 flex items-center justify-center flex-shrink-0 cursor-pointer"
+                  className="w-9 h-9 rounded-full border-0 flex items-center justify-center cursor-pointer"
                   style={{
                     background: recording ? COLORS.danger : COLORS.bubbleBot,
                     color: recording ? "#fff" : COLORS.accentDark,
-                    opacity: uploading ? 0.5 : 1,
                   }}
                 >
                   {recording ? <Square size={14} /> : <Mic size={16} />}
@@ -391,19 +390,15 @@ export default function ChatWidget({ user }) {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && sendTextMessage()}
-                  placeholder={
-                    recording ? "Ձայնագրում է... սեղմեք կանգնեցնելու համար" : "Գրեք հաղորդագրություն..."
-                  }
+                  placeholder={recording ? "Ձայնագրում է..." : "Գրեք..."}
                   disabled={recording}
-                  className="flex-1 rounded-full px-4 py-2 text-sm outline-none"
-                  style={{ border: `1px solid ${COLORS.border}` }}
+                  className="flex-1 rounded-full px-4 py-2 text-sm outline-none border border-gray-200"
                 />
                 <button
                   onClick={sendTextMessage}
                   disabled={recording}
-                  aria-label="Ուղարկել"
-                  className="w-9 h-9 rounded-full border-0 flex items-center justify-center flex-shrink-0 cursor-pointer"
-                  style={{ background: COLORS.accent, color: "#fff", opacity: recording ? 0.5 : 1 }}
+                  className="w-9 h-9 rounded-full border-0 flex items-center justify-center cursor-pointer text-white"
+                  style={{ background: COLORS.accent }}
                 >
                   <Send size={16} />
                 </button>

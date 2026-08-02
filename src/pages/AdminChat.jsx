@@ -12,8 +12,8 @@ import {
 import { db } from "../firebase";
 import { Send } from "lucide-react";
 
-// ⚠️ Փոխեք ձեր իրական admin email-ով (Firebase-ում login անելիս օգտագործած)
-const ADMIN_EMAIL = "your-admin-email@gmail.com";
+const ADMIN_EMAIL = "gorkhachaturyan788@gmail.com";
+
 
 const COLORS = {
   accent: "#5b4bff",
@@ -33,8 +33,8 @@ export default function AdminChat({ user }) {
   const bodyRef = useRef(null);
 
   const isAdmin = user?.email === ADMIN_EMAIL;
-
-  // ---------- Ցանկը՝ բոլոր զրույցները, ամենավերջինը՝ առաջինը ----------
+  
+  
   useEffect(() => {
     if (!isAdmin) return;
     const q = query(collection(db, "chats"), orderBy("updatedAt", "desc"));
@@ -44,8 +44,8 @@ export default function AdminChat({ user }) {
     });
     return () => unsubscribe();
   }, [isAdmin]);
-
-  // ---------- Ընտրված զրույցի հաղորդագրությունները ----------
+  
+  
   useEffect(() => {
     if (!activeId) {
       setMessages([]);
@@ -60,16 +60,16 @@ export default function AdminChat({ user }) {
     });
     return () => unsubscribe();
   }, [activeId]);
-
+  
   useEffect(() => {
     if (bodyRef.current) bodyRef.current.scrollTop = bodyRef.current.scrollHeight;
   }, [messages]);
-
+  
   async function sendReply() {
     const text = input.trim();
     if (!text || !activeId) return;
     setInput("");
-
+    
     await addDoc(collection(db, "chats", activeId, "messages"), {
       type: "text",
       text,
@@ -83,7 +83,12 @@ export default function AdminChat({ user }) {
       { merge: true }
     );
   }
-
+  
+  if (user.email === "gorkhachaturyan788@gmail.com") {
+    navigate("/admin/chat");
+  } else {
+    navigate("/account");
+  }
   if (!user) {
     return (
       <div className="p-10 text-center" style={{ color: COLORS.textSoft }}>
@@ -91,7 +96,7 @@ export default function AdminChat({ user }) {
       </div>
     );
   }
-
+  
   if (!isAdmin) {
     return (
       <div className="p-10 text-center" style={{ color: COLORS.textSoft }}>
@@ -107,7 +112,7 @@ export default function AdminChat({ user }) {
       className="flex"
       style={{ height: "calc(100vh - 0px)", background: COLORS.bg }}
     >
-      {/* ================== ԶՐՈՒՅՑՆԵՐԻ ՑԱՆԿ ================== */}
+    
       <div
         className="w-72 flex-shrink-0 overflow-y-auto"
         style={{ borderRight: `1px solid ${COLORS.border}`, background: "#fff" }}
@@ -148,7 +153,7 @@ export default function AdminChat({ user }) {
         ))}
       </div>
 
-      {/* ================== ԸՆՏՐՎԱԾ ԶՐՈՒՅՑ ================== */}
+     
       <div className="flex-1 flex flex-col min-w-0">
         {!activeId && (
           <div className="flex-1 flex items-center justify-center text-sm" style={{ color: COLORS.textSoft }}>

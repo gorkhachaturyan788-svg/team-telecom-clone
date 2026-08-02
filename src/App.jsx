@@ -24,8 +24,8 @@ import Profil from "./components/profil";
 
 function Layout() {
   const location = useLocation();
-  const hideLayout =
-    location.pathname === "/login" || location.pathname === "/admin/chat";
+  // Չաթը և Footer-ը թաքցնում ենք ՄԻԱՅՆ /login էջում
+  const hideLayout = location.pathname === "/login";
 
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -40,7 +40,7 @@ function Layout() {
 
   return (
     <>
-      {!hideLayout && <Header user={user} />}
+      <Header />
 
       <Routes>
         <Route path="/" element={<Home />} />
@@ -59,14 +59,11 @@ function Layout() {
         <Route path="/teampay" element={<TeamPay />} />
         <Route path="/team-energy" element={<TeamEnergy />} />
         <Route path="/payment" element={<BillPaymentForm />} />
-
-        {/* Ադմինի էջը, որտեղ երևում են բոլոր user-ների զրույցները */}
-        <Route path="/admin/chat" element={<AdminChat user={user} />} />
       </Routes>
 
       {!hideLayout && <Footer />}
 
-      {/* Chat widget-ը երևում է բոլոր էջերում, բացի /login-ից և admin էջից */}
+      {/* Չաթը կանչում ենք ՄԵԿ ԱՆԳԱՄ՝ բոլոր մուտք գործած օգտատերերի համար */}
       {!hideLayout && !authLoading && <ChatWidget user={user} />}
     </>
   );
