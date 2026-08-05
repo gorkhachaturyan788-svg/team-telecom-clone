@@ -36,7 +36,7 @@ const COLORS = {
   bubbleBot: "#f0eefc",
 };
 
-// Ֆունկցիա երկու օգտատերերի համար միասնական Chat Room ID ստեղծելու համար
+
 function getChatRoomId(uid1, uid2) {
   return [uid1, uid2].sort().join("_");
 }
@@ -59,14 +59,15 @@ async function uploadToCloudinary(audioBlob) {
 export default function DirectChatWidget({ user }) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  
+
   const [allUsers, setAllUsers] = useState([]); // Բոլոր օգտատերերի ցանկը
   const [activePartner, setActivePartner] = useState(null); // Ընտրված զրուցակիցը
-  
+
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [recording, setRecording] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [sendError, setSendError] = useState(""); // Ուղարկելու սխալի հաղորդագրություն
 
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
@@ -74,7 +75,6 @@ export default function DirectChatWidget({ user }) {
 
   const isLoggedIn = !!user;
 
-  // 1. Գրանցում ենք ընթացիկ օգտատիրոջը "users" collection-ում
   useEffect(() => {
     if (!isLoggedIn || !user?.uid) return;
 
@@ -87,24 +87,28 @@ export default function DirectChatWidget({ user }) {
         updatedAt: serverTimestamp(),
       },
       { merge: true }
-    );
+    ).catch((err) => console.error("Failed to upsert user profile:", err));
   }, [isLoggedIn, user]);
 
-  // 2. Բերում ենք մյուս ԲՈԼՈՐ օգտատերերին, որպեսզի կարողանանք ընտրել ում հետ խոսել
   useEffect(() => {
     if (!isLoggedIn || !user?.uid) return;
 
-    const unsubscribe = onSnapshot(collection(db, "users"), (snapshot) => {
-      const usersList = snapshot.docs
-        .map((d) => d.data())
-        .filter((u) => u.uid !== user.uid); // Բացառում ենք ինքներս մեզ
-      setAllUsers(usersList);
-    });
+    const unsubscribe = onSnapshot(
+      collection(db, "users"),
+      (snapshot) => {
+        const usersList = snapshot.docs
+          .map((d) => d.data())
+          .filter((u) => u.uid !== user.uid);
+        setAllUsers(usersList);
+      },
+      (err) => {
+        console.error("Users listener error:", err);
+      }
+    );
 
     return () => unsubscribe();
   }, [isLoggedIn, user?.uid]);
 
-  // 3. Լսում ենք ընտրված զրուցակցի հետ չաթի հաղորդագրությունները
   useEffect(() => {
     if (!isLoggedIn || !user?.uid || !activePartner) {
       setMessages([]);
@@ -112,13 +116,30 @@ export default function DirectChatWidget({ user }) {
     }
 
     const roomId = getChatRoomId(user.uid, activePartner.uid);
-    const messagesRef = collection(db, "direct_chats", roomId, "messages");
-    const q = query(messagesRef, orderBy("createdAt", "asc"));
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const msgs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-      setMessages(msgs);
-    });
+    const q = query(
+      collection(db, "direct_chats", roomId, "messages"),
+      orderBy("createdAt", "asc")
+    );
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const msgs = snapshot.docs.map((d) => ({
+          id: d.id,
+          ...d.data(),
+        }));
+        setMessages(msgs);
+      },
+      (err) => {
+        // Սա է առաջին տեղը, որտեղ Firestore permission-denied սխալները երևում են։
+        // Եթե այստեղ սխալ ես տեսնում console-ում, խնդիրը Firestore Security Rules-ում է։
+        console.error("Messages listener error:", err);
+        setSendError(
+          "Հաղորդագրությունները չհաջողվեց բեռնել (հասանելիության սխալ)։"
+        );
+      }
+    );
 
     return () => unsubscribe();
   }, [isLoggedIn, user?.uid, activePartner]);
@@ -129,7 +150,6 @@ export default function DirectChatWidget({ user }) {
     }
   }, [messages, open]);
 
-  // Հաղորդագրություն ջնջել
   async function deleteMessage(messageId) {
     if (!isLoggedIn || !user?.uid || !activePartner) return;
     const roomId = getChatRoomId(user.uid, activePartner.uid);
@@ -137,36 +157,74 @@ export default function DirectChatWidget({ user }) {
     try {
       await deleteDoc(doc(db, "direct_chats", roomId, "messages", messageId));
     } catch (err) {
-      console.error(err);
+      console.error("Failed to delete message:", err);
+      setSendError("Հաղորդագրությունը չհաջողվեց ջնջել։");
     }
   }
+
+  // Ստեղծում/թարմացնում է root chat room փաստաթուղթը՝ participants դաշտով,
+  // որպեսզի Security Rules-ը կարողանա ստուգել՝ ով է մասնակից (կարևոր է,
+  // եթե rules-ը ստուգում է roomDoc.data().participants)
+  async function ensureRoomDoc(roomId, partnerUid) {
+    try {
+      await setDoc(
+        doc(db, "direct_chats", roomId),
+        {
+          participants: [user.uid, partnerUid].sort(),
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+    } catch (err) {
+      console.error("Failed to create/update room doc:", err);
+    }
+  }
+
+  // Երբ ընտրում ենք զրուցակցին, ապահովենք որ room doc-ը գոյություն ունի
+  useEffect(() => {
+    if (!isLoggedIn || !user?.uid || !activePartner) return;
+    const roomId = getChatRoomId(user.uid, activePartner.uid);
+    ensureRoomDoc(roomId, activePartner.uid);
+  }, [isLoggedIn, user?.uid, activePartner]);
 
   // Տեքստային հաղորդագրություն ուղարկել
   async function sendTextMessage() {
     const text = input.trim();
     if (!text || !isLoggedIn || !user?.uid || !activePartner) return;
     setInput("");
+    setSendError("");
 
     const roomId = getChatRoomId(user.uid, activePartner.uid);
     const messagesRef = collection(db, "direct_chats", roomId, "messages");
 
-    await addDoc(messagesRef, {
-      type: "text",
-      text,
-      senderUid: user.uid,
-      senderName: user.displayName || user.email?.split("@")[0] || "Օգտատեր",
-      createdAt: serverTimestamp(),
-    });
+    try {
+      await ensureRoomDoc(roomId, activePartner.uid);
+      await addDoc(messagesRef, {
+        type: "text",
+        text,
+        senderUid: user.uid,
+        senderName: user.displayName || user.email?.split("@")[0] || "Օգտատեր",
+        createdAt: serverTimestamp(),
+      });
+    } catch (err) {
+      // Այստեղ կտեսնես, եթե խնդիրը permission-denied է կամ ցանցային
+      console.error("Failed to send message:", err);
+      setSendError("Հաղորդագրությունը չուղարկվեց։ Խնդրում ենք փորձել կրկին։");
+      setInput(text); // վերադարձնում ենք գրված տեքստը, որ չկորչի
+    }
   }
 
   // Ձայնային հաղորդագրություն ուղարկել
   async function sendVoiceMessage(audioBlob) {
     if (!isLoggedIn || !user?.uid || !activePartner) return;
     setUploading(true);
+    setSendError("");
 
     try {
-      const audioUrl = await uploadToCloudinary(audioBlob);
       const roomId = getChatRoomId(user.uid, activePartner.uid);
+      await ensureRoomDoc(roomId, activePartner.uid);
+
+      const audioUrl = await uploadToCloudinary(audioBlob);
 
       await addDoc(collection(db, "direct_chats", roomId, "messages"), {
         type: "audio",
@@ -175,8 +233,8 @@ export default function DirectChatWidget({ user }) {
         createdAt: serverTimestamp(),
       });
     } catch (err) {
-      console.error(err);
-      alert("Ձայնային հաղորդագրությունը չուղարկվեց:");
+      console.error("Failed to send voice message:", err);
+      setSendError("Ձայնային հաղորդագրությունը չուղարկվեց։");
     } finally {
       setUploading(false);
     }
@@ -368,6 +426,15 @@ export default function DirectChatWidget({ user }) {
                   </div>
                 )}
               </div>
+
+              {sendError && (
+                <div
+                  className="text-xs px-3 py-1"
+                  style={{ color: COLORS.danger }}
+                >
+                  {sendError}
+                </div>
+              )}
 
               {/* Input section */}
               <div

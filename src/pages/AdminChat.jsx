@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   collection,
   doc,
@@ -14,7 +15,6 @@ import { Send } from "lucide-react";
 
 const ADMIN_EMAIL = "gorkhachaturyan788@gmail.com";
 
-
 const COLORS = {
   accent: "#5b4bff",
   accentDark: "#4636d1",
@@ -26,6 +26,7 @@ const COLORS = {
 };
 
 export default function AdminChat({ user }) {
+  const navigate = useNavigate();
   const [chats, setChats] = useState([]);
   const [activeId, setActiveId] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -33,19 +34,30 @@ export default function AdminChat({ user }) {
   const bodyRef = useRef(null);
 
   const isAdmin = user?.email === ADMIN_EMAIL;
-  
-  
+
+  // Ոչ ադմին օգտատերերին ուղղորդում ենք /account, ոչ թե render-ի ընթացքում
+  // (navigate() render-ի ժամանակ կանչելը սխալ է React-ում և crash է առաջացնում)
+  useEffect(() => {
+    if (!user) return;
+    if (!isAdmin) {
+      navigate("/account");
+    }
+  }, [user, isAdmin, navigate]);
+
   useEffect(() => {
     if (!isAdmin) return;
     const q = query(collection(db, "chats"), orderBy("updatedAt", "desc"));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const list = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-      setChats(list);
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const list = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+        setChats(list);
+      },
+      (err) => console.error("Chats listener error:", err)
+    );
     return () => unsubscribe();
   }, [isAdmin]);
-  
-  
+
   useEffect(() => {
     if (!activeId) {
       setMessages([]);
@@ -55,40 +67,44 @@ export default function AdminChat({ user }) {
       collection(db, "chats", activeId, "messages"),
       orderBy("createdAt", "asc")
     );
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setMessages(snapshot.docs.map((d) => ({ id: d.id, ...d.data() })));
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        setMessages(snapshot.docs.map((d) => ({ id: d.id, ...d.data() })));
+      },
+      (err) => console.error("Admin messages listener error:", err)
+    );
     return () => unsubscribe();
   }, [activeId]);
-  
+
   useEffect(() => {
     if (bodyRef.current) bodyRef.current.scrollTop = bodyRef.current.scrollHeight;
   }, [messages]);
-  
+
   async function sendReply() {
     const text = input.trim();
     if (!text || !activeId) return;
     setInput("");
-    
-    await addDoc(collection(db, "chats", activeId, "messages"), {
-      type: "text",
-      text,
-      sender: "admin",
-      createdAt: serverTimestamp(),
-    });
 
-    await setDoc(
-      doc(db, "chats", activeId),
-      { lastMessage: text, updatedAt: serverTimestamp() },
-      { merge: true }
-    );
+    try {
+      await addDoc(collection(db, "chats", activeId, "messages"), {
+        type: "text",
+        text,
+        sender: "admin",
+        createdAt: serverTimestamp(),
+      });
+
+      await setDoc(
+        doc(db, "chats", activeId),
+        { lastMessage: text, updatedAt: serverTimestamp() },
+        { merge: true }
+      );
+    } catch (err) {
+      console.error("Failed to send admin reply:", err);
+      setInput(text);
+    }
   }
-  
-  if (user.email === "gorkhachaturyan788@gmail.com") {
-    navigate("/admin/chat");
-  } else {
-    navigate("/account");
-  }
+
   if (!user) {
     return (
       <div className="p-10 text-center" style={{ color: COLORS.textSoft }}>
@@ -96,8 +112,9 @@ export default function AdminChat({ user }) {
       </div>
     );
   }
-  
+
   if (!isAdmin) {
+    // useEffect-ը արդեն ուղղորդում է /account, բայց մինչ այդ ցույց ենք տալիս հաղորդագրություն
     return (
       <div className="p-10 text-center" style={{ color: COLORS.textSoft }}>
         Ձեր հաշիվը այս էջ մուտք գործելու իրավունք չունի։
@@ -112,7 +129,6 @@ export default function AdminChat({ user }) {
       className="flex"
       style={{ height: "calc(100vh - 0px)", background: COLORS.bg }}
     >
-    
       <div
         className="w-72 flex-shrink-0 overflow-y-auto"
         style={{ borderRight: `1px solid ${COLORS.border}`, background: "#fff" }}
@@ -153,7 +169,6 @@ export default function AdminChat({ user }) {
         ))}
       </div>
 
-     
       <div className="flex-1 flex flex-col min-w-0">
         {!activeId && (
           <div className="flex-1 flex items-center justify-center text-sm" style={{ color: COLORS.textSoft }}>
