@@ -71,7 +71,6 @@ export default function Header() {
 
   return (
     <header className="w-full font-sans relative">
-      {/* Վերին հատված */}
       <div className="bg-[#003853] text-white text-[13px] h-[36px] flex items-center justify-between px-6 sm:px-10 lg:px-[10%] relative">
         <div className="flex h-full">
           <Link to="/" className="flex items-center px-3 sm:px-4 hover:bg-[#002d44]">Անհատներին</Link>
@@ -81,7 +80,6 @@ export default function Header() {
           </Link>
         </div>
 
-        {/* Աջ մասը մեծ էկրանների համար */}
         <div className="hidden md:flex items-center h-full">
           <div className="px-3 cursor-pointer hover:text-gray-300">
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
@@ -98,7 +96,6 @@ export default function Header() {
           </Link>
         </div>
 
-        {/* Կոճակ փոքր էկրանների համար, երբ տեղը չի հերիքում */}
         <div className="flex md:hidden items-center h-full">
           <button 
             onClick={() => setIsTopMenuOpen(!isTopMenuOpen)}
@@ -110,7 +107,6 @@ export default function Header() {
             </svg>
           </button>
 
-          {/* Բացվող ցանկը փոքր էկրանների համար */}
           {isTopMenuOpen && (
             <div className="absolute top-full right-0 w-[220px] bg-[#003853] shadow-xl border-t border-[#002d44] py-2 z-50 flex flex-col">
               <div className="flex items-center px-4 py-2 hover:bg-[#002d44] cursor-pointer text-xs">
@@ -133,26 +129,26 @@ export default function Header() {
       </div>
 
       {/* Ստորին նավիգացիա */}
-      <div className="bg-white h-auto lg:h-[80px] flex flex-col lg:flex-row items-center justify-between px-6 sm:px-10 lg:px-[10%] border-b border-gray-200 py-4 lg:py-0 gap-4 lg:gap-0">
-        <Link to="/" className="mr-auto">
+      <div className="bg-white h-auto lg:h-[80px] flex flex-col lg:flex-row items-center justify-between px-6 sm:px-10 lg:px-[6%] xl:px-[10%] border-b border-gray-200 py-4 lg:py-0 gap-4 lg:gap-0">
+        <Link to="/" className="mr-auto lg:mr-4 shrink-0">
           <img src="https://www.telecomarmenia.am/img/fb-share.png?v=2" alt="Team Telecom" className="h-[45px] lg:h-[55px] w-auto object-contain" />
         </Link>
 
-        <nav className="flex flex-wrap items-center justify-center lg:h-full gap-2 lg:gap-0 relative">
+        <nav className="flex flex-nowrap items-center justify-center lg:h-full gap-0 relative w-full lg:w-auto overflow-x-auto no-scrollbar">
           {menuItems.map((item, index) => (
             <div
               key={index}
-              className="h-full flex items-center relative"
+              className="h-full flex items-center relative shrink-0"
             >
               <button
                 onClick={() => setActiveDropdown(activeDropdown === index ? null : index)}
-                className={`px-3 lg:px-6 text-[14px] h-full flex items-center gap-1.5 transition-colors cursor-pointer ${
+                className={`px-2 lg:px-3 xl:px-4 text-[13px] xl:text-[14px] h-full flex items-center gap-1 whitespace-nowrap transition-colors cursor-pointer ${
                   activeDropdown === index ? "text-[#003853] font-semibold bg-gray-50" : "text-[#444] hover:text-[#003853]"
                 }`}
               >
                 {item.title}
                 <svg 
-                  className={`w-3.5 h-3.5 transition-transform duration-200 ${activeDropdown === index ? "rotate-180" : ""}`} 
+                  className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${activeDropdown === index ? "rotate-180" : ""}`} 
                   fill="none" 
                   stroke="currentColor" 
                   viewBox="0 0 24 24"
@@ -179,7 +175,7 @@ export default function Header() {
           ))}
         </nav>
 
-        <Link to="/payment" className="bg-[#79cdd7] h-[50px] lg:h-full w-[80px] flex items-center justify-center ml-auto rounded-lg lg:rounded-none">
+        <Link to="/payment" className="bg-[#79cdd7] h-[50px] lg:h-full w-[80px] flex items-center justify-center ml-auto shrink-0 rounded-lg lg:rounded-none">
           <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="#003853" strokeWidth="1.5"><rect x="3" y="7" width="18" height="12" rx="2"/><path d="M3 11h18"/></svg>
         </Link>
       </div>

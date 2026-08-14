@@ -22,9 +22,11 @@ import TeamPay from "./pages/TeamPay";
 import TeamEnergy from "./pages/TeamEnergy";
 import Profil from "./components/profil";
 
+import CosmoPage from "./components/CosmoPage";
+import ComboPage from "./components/ComboPage"; // <--- Combo-ի import-ը
+
 function Layout() {
   const location = useLocation();
-  // Չաթը և Footer-ը թաքցնում ենք ՄԻԱՅՆ /login էջում
   const hideLayout = location.pathname === "/login";
 
   const [user, setUser] = useState(null);
@@ -52,6 +54,14 @@ function Layout() {
         <Route path="/tariffs/mobile" element={<Mobile />} />
         <Route path="/tariffs/fixed" element={<TariffsFixed />} />
 
+        <Route path="/tariffs/combo" element={<CosmoPage />} />
+        <Route path="/internet/home-combo" element={<CosmoPage />} />
+
+       
+        <Route path="/tariffs/combos" element={<ComboPage />} />
+        <Route path="/tariffs/combi" element={<ComboPage />} />
+        <Route path="/internet/combo" element={<ComboPage />} />
+
         <Route path="/account" element={<Profil user={user} />} />
 
         <Route path="/teamtv" element={<TeamTV />} />
@@ -63,7 +73,6 @@ function Layout() {
 
       {!hideLayout && <Footer />}
 
-      {/* Չաթը կանչում ենք ՄԵԿ ԱՆԳԱՄ՝ բոլոր մուտք գործած օգտատերերի համար */}
       {!hideLayout && !authLoading && <ChatWidget user={user} />}
     </>
   );
