@@ -21,7 +21,7 @@ export default function Header() {
       to: "/internet",
       dropdown: [
         { label: "Սմարթֆոնի համար", to: "/internet/smartphone" },
-        { label: "Տան համար - ԿՈՄՄՈ", to: "/internet/home-combo" },
+        { label: "Ինտերնետ և TV - ԿՈՄՄՈ", to: "/tariffs/combo" },
         { label: "Տան համար - ԿՈՄԲՈ", to: "/internet/home-combi" },
         { label: "Համակարգչի/պլանշետի համար", to: "/internet/device" },
         { label: "Team 5G", to: "/internet/5g" },
@@ -39,7 +39,7 @@ export default function Header() {
       ],
     },
     {
-      title: "Ռոումինգ և Միջազգային կապ",
+      title: "Ռոումինգ",
       to: "/roaming",
       dropdown: [
         { label: "Ռոումինգ", to: "/roaming/roaming" },
@@ -49,7 +49,7 @@ export default function Header() {
       ],
     },
     {
-      title: "Բիզնես լուծումներ",
+      title: "Առցանց Խանութներ ",
       to: "/business-solutions",
       dropdown: [
         { label: "E-shop", to: "/eshop" },
@@ -129,21 +129,22 @@ export default function Header() {
       </div>
 
       {/* Ստորին նավիգացիա */}
-      <div className="bg-white h-auto lg:h-[80px] flex flex-col lg:flex-row items-center justify-between px-6 sm:px-10 lg:px-[6%] xl:px-[10%] border-b border-gray-200 py-4 lg:py-0 gap-4 lg:gap-0">
-        <Link to="/" className="mr-auto lg:mr-4 shrink-0">
-          <img src="https://www.telecomarmenia.am/img/fb-share.png?v=2" alt="Team Telecom" className="h-[45px] lg:h-[55px] w-auto object-contain" />
+      <div className="bg-white h-auto lg:h-[80px] flex flex-col lg:flex-row items-center justify-between px-4 sm:px-6 lg:px-[4%] xl:px-[8%] border-b border-gray-200 py-4 lg:py-0 gap-4 lg:gap-0">
+        <Link to="/" className="mr-auto lg:mr-2 shrink-0">
+          <img src="https://www.telecomarmenia.am/img/fb-share.png?v=2" alt="Team Telecom" className="h-[40px] lg:h-[50px] w-auto object-contain" />
         </Link>
 
-        <nav className="flex flex-nowrap items-center justify-center lg:h-full gap-0 relative w-full lg:w-auto overflow-x-auto no-scrollbar">
+        {/* Փոփոխված հատվածը՝ կենտրոնացման և չկորչելու համար */}
+        <nav className="flex flex-wrap items-center justify-center lg:h-full gap-x-1 xl:gap-x-2 gap-y-2 relative flex-1 max-w-4xl mx-auto">
           {menuItems.map((item, index) => (
             <div
               key={index}
-              className="h-full flex items-center relative shrink-0"
+              className="h-10 lg:h-full flex items-center relative shrink-0"
             >
               <button
                 onClick={() => setActiveDropdown(activeDropdown === index ? null : index)}
-                className={`px-2 lg:px-3 xl:px-4 text-[13px] xl:text-[14px] h-full flex items-center gap-1 whitespace-nowrap transition-colors cursor-pointer ${
-                  activeDropdown === index ? "text-[#003853] font-semibold bg-gray-50" : "text-[#444] hover:text-[#003853]"
+                className={`px-2 xl:px-3 text-[13px] xl:text-[14px] font-semibold h-full flex items-center gap-1 whitespace-nowrap transition-colors cursor-pointer ${
+                  activeDropdown === index ? "text-[#003853] bg-gray-50" : "text-[#333] hover:text-[#003853]"
                 }`}
               >
                 {item.title}
@@ -164,7 +165,7 @@ export default function Header() {
                       key={subIndex}
                       to={subItem.to}
                       onClick={() => setActiveDropdown(null)}
-                      className="px-4 py-3 text-[14px] text-[#444] hover:bg-gray-50 hover:text-[#003853] border-b border-gray-100 last:border-none transition-colors"
+                      className="px-4 py-3 text-[14px] text-[#333] hover:bg-gray-50 hover:text-[#003853] border-b border-gray-100 last:border-none transition-colors"
                     >
                       {subItem.label}
                     </Link>
@@ -175,7 +176,7 @@ export default function Header() {
           ))}
         </nav>
 
-        <Link to="/payment" className="bg-[#79cdd7] h-[50px] lg:h-full w-[80px] flex items-center justify-center ml-auto shrink-0 rounded-lg lg:rounded-none">
+        <Link to="/payment" className="bg-[#79cdd7] h-[50px] lg:h-full w-[75px] flex items-center justify-center ml-auto lg:ml-0 shrink-0 rounded-lg lg:rounded-none">
           <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="#003853" strokeWidth="1.5"><rect x="3" y="7" width="18" height="12" rx="2"/><path d="M3 11h18"/></svg>
         </Link>
       </div>
