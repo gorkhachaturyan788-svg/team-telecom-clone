@@ -25,9 +25,7 @@ import CosmoPage from "./components/CosmoPage";
 import ComboPage from "./components/ComboPage";
 
 import Car from "./pages/Car";
-
 import Smart from "./pages/Smart";
-
 import HamarTan from "./pages/HamarTan";
 import Kompi from "./pages/Kompi";
 
@@ -39,21 +37,13 @@ import Carayutyun4 from "./pages/Carayutyun4";
 import Carayutyun5 from "./pages/Carayutyun5";
 
 import Sarq from "./pages/Sarq";
-
 import Spasarkum from "./pages/Spasarkum";
-
 import Hrahang from "./pages/Hrahang";
-
 import Room from "./pages/Room";
-
 import Mig from "./pages/Mig";
-
 import Ogtakar from "./pages/Ogtakar";
-
 import Shop1 from "./pages/Shop1";
-
 import Hetevel from "./pages/Hetevel";
-
 import Support from "./pages/Support";
 
 function Layout() {
@@ -76,17 +66,41 @@ function Layout() {
       <Header />
 
       <Routes>
+        {/* ================= ԳԼԽԱՎՈՐ ԵՒ ԲԻԶՆԵՍ ================= */}
         <Route path="/" element={<Home />} />
         <Route path="/business" element={<Business />} />
         <Route path="/eshop" element={<Eshop />} />
         <Route path="/online-credit" element={<Shop1 />} />
+        <Route path="/account" element={<Profil user={user} />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/subscription" element={<Hetevel />} />
 
-        <Route path="/support/settings" element={<Sarq />} />
-        <Route path="/devices" element={<Sarq />} />
-        
-        {/* Ավելացված է այս տողերը, որպեսզի սխալ չտա */}
+        {/* ================= ԲՋՋԱՅԻՆ ԿԱՊ ԵՒ ՍԱԿԱԳՆԵՐ ================= */}
+        <Route path="/tariffs" element={<Mobile />} />
+        <Route path="/tariffs/mobile" element={<Mobile />} />
+        <Route path="/tariffs/fixed" element={<TariffsFixed />} />
+        <Route path="/internet/smartphone" element={<Smart />} />
+        <Route path="/smart" element={<Smart />} />
+
+        {/* Տան համար - Կոսմո */}
+        <Route path="/tariffs/combo" element={<CosmoPage />} />
+        <Route path="/internet/home-combo" element={<CosmoPage />} />
+
+        {/* ՍԱԿԱԳՆԵՐԻ ԿՈՄԲՕ (ComboPage) */}
+        <Route path="/tariffs/combi" element={<ComboPage />} />
+        <Route path="/tariffs/combos" element={<ComboPage />} />
+
+        {/* ԻՆՏԵՐՆԵՏԻ ԿՈՄԲՕ (HamarTan) */}
+        <Route path="/internet/home-combi" element={<HamarTan />} />
+        <Route path="/internet/combo" element={<HamarTan />} />
+
+        {/* Համակարգչի / պլանշետի համար */}
         <Route path="/devices/computer" element={<Kompi />} />
         <Route path="/internet/device" element={<Kompi />} />
+
+        {/* ================= ԱՋԱԿՑՈՒԹՅՈՒՆ ԵՒ ՍԱՐՔԱՎՈՐՈՒՄՆԵՐ ================= */}
+        <Route path="/support/settings" element={<Sarq />} />
+        <Route path="/devices" element={<Sarq />} />
 
         <Route path="/support/subscriber-service" element={<Spasarkum />} />
         <Route path="/support/service" element={<Spasarkum />} />
@@ -94,6 +108,15 @@ function Layout() {
         <Route path="/support/ussd-codes" element={<Hrahang />} />
         <Route path="/support/ussd" element={<Hrahang />} />
 
+        <Route path="/support/useful-info" element={<Ogtakar />} />
+        <Route path="/useful-info" element={<Ogtakar />} />
+        <Route path="/roaming/info" element={<Ogtakar />} />
+        <Route path="/ogtakar" element={<Ogtakar />} />
+
+        <Route path="/support" element={<Support />} />
+        <Route path="/support/faq" element={<Support />} />
+
+        {/* ================= ՌՈՈՄԻՆԳ ԵՒ ՄԻՋԱԶԳԱՅԻՆ ================= */}
         <Route path="/roaming" element={<Room />} />
         <Route path="/support/roaming" element={<Room />} />
         <Route path="/roaming/map" element={<Room />} />
@@ -103,39 +126,11 @@ function Layout() {
         <Route path="/international" element={<Mig />} />
         <Route path="/roaming/international" element={<Mig />} />
 
-        <Route path="/support/useful-info" element={<Ogtakar />} />
-        <Route path="/useful-info" element={<Ogtakar />} />
-        <Route path="/roaming/info" element={<Ogtakar />} />
-        <Route path="/ogtakar" element={<Ogtakar />} />
-
         <Route path="/roaming/services" element={<Car />} />
         <Route path="/services" element={<Car />} />
         <Route path="/car" element={<Car />} />
 
-        <Route path="/internet/smartphone" element={<Smart />} />
-        <Route path="/smart" element={<Smart />} />
-        <Route path="/tariffs/mobile" element={<Smart />} />
-
-        <Route path="/subscription" element={<Hetevel />} />
-
-        <Route path="/support" element={<Support />} />
-        <Route path="/support/faq" element={<Support />} />
-
-        <Route path="/login" element={<Login />} />
-
-        <Route path="/tariffs" element={<Mobile />} />
-        <Route path="/tariffs/fixed" element={<TariffsFixed />} />
-
-        <Route path="/tariffs/combo" element={<CosmoPage />} />
-        <Route path="/internet/home-combo" element={<CosmoPage />} />
-
-        <Route path="/internet/home-combi" element={<HamarTan />} />
-        <Route path="/tariffs/combos" element={<HamarTan />} />
-        <Route path="/tariffs/combi" element={<HamarTan />} />
-        <Route path="/internet/combo" element={<HamarTan />} />
-
-        <Route path="/account" element={<Profil user={user} />} />
-
+        {/* ================= ԾԱՌԱՅՈՒԹՅՈՒՆՆԵՐ ԵՒ ՀԱՎԵԼՎԱԾՆԵՐ ================= */}
         <Route path="/services/team-tv" element={<Carayutyun1 />} />
         <Route path="/services/payment" element={<Carayutyun2 />} />
         <Route path="/services/entertainment" element={<Carayutyun3 />} />
