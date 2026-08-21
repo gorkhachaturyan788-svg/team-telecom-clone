@@ -1,7 +1,11 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Star } from "lucide-react";
 
 export default function TeamPayHero() {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <div className="mb-[60px] p-5 max-w-7xl mx-auto overflow-hidden">
       <div className="flex flex-col md:flex-row items-center md:items-start gap-10">

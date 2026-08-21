@@ -1,21 +1,10 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 
 export default function TeamPaySection() {
-  const apps = [
-    {
-      title: "My Team",
-      desc: "My Team հավելվածի միջոցով Դուք կարող եք՝ հաշվեկշռի և փաթեթների մնացորդների ստուգում, ավտոմատ վճարումների ակտիվացում, սակագնային փաթեթների կառավարում։",
-      img: "https://www.telecomarmenia.am/images/team_apps/1/16510708696227.png",
-      link: "/my-team"
-    },
-    {
-      title: "Team Energy",
-      desc: "Team Energy հավելվածի միջոցով կարող եք գտնել մոտակա էլեկտրական լիցքավորման կայանը, հետևելով քայլերի հաջորդականությանը՝ հեշտությամբ լիցքավորել մեքենան։",
-      img: "https://www.telecomarmenia.am/images/team_apps/1/17249416402556.png",
-      link: "/team-energy"
-    }
-  ];
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   return (
     <div className="py-[60px] max-w-7xl mx-auto px-4 overflow-hidden">
@@ -24,27 +13,47 @@ export default function TeamPaySection() {
       </h2>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-        {apps.map((app, index) => (
-          <div key={index} className="flex flex-col sm:flex-row items-center sm:items-start gap-6 p-5 bg-white rounded-3xl shadow-sm border border-gray-100">
-            <img 
-              src={app.img} 
-              alt={app.title} 
-              className="w-[160px] h-[160px] rounded-[20px] object-cover shrink-0" 
-            />
-            <div className="text-center sm:text-left">
-              <h3 className="text-[24px] text-[#1b2d46] mb-2.5 font-bold">{app.title}</h3>
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 p-6 bg-white rounded-3xl shadow-sm border border-gray-100 h-full justify-between">
+          <img 
+            src="https://www.telecomarmenia.am/images/team_apps/1/16510708696227.png" 
+            alt="My Team" 
+            className="w-[160px] h-[160px] rounded-[20px] object-cover shrink-0" 
+          />
+          <div className="flex flex-col justify-between h-full text-center sm:text-left w-full">
+            <div>
+              <h3 className="text-[24px] text-[#1b2d46] mb-2.5 font-bold">My Team</h3>
               <p className="text-[#68758a] text-[14px] leading-relaxed mb-5">
-                {app.desc}
+                My Team հավելվածի միջոցով Դուք կարող եք՝ հաշվեկշռի և փաթեթների մնացորդների ստուգում, ավտոմատ վճարումների ակտիվացում, սակագնային փաթեթների կառավարում։
               </p>
-              <Link 
-                to={app.link} 
-                className="bg-[#f55252] text-white px-[30px] py-2.5 rounded-[25px] no-underline font-semibold inline-block hover:bg-[#e04444] transition-colors"
-              >
+            </div>
+            <div>
+              <Link to="/my-team" className="bg-[#f55252] text-white px-[30px] py-2.5 rounded-[25px] no-underline font-semibold inline-block hover:bg-[#e04444] transition-colors">
                 Միանալ
               </Link>
             </div>
           </div>
-        ))}
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 p-6 bg-white rounded-3xl shadow-sm border border-gray-100 h-full justify-between">
+          <img 
+            src="https://www.telecomarmenia.am/images/team_apps/1/17249416402556.png" 
+            alt="Team Energy" 
+            className="w-[160px] h-[160px] rounded-[20px] object-cover shrink-0" 
+          />
+          <div className="flex flex-col justify-between h-full text-center sm:text-left w-full">
+            <div>
+              <h3 className="text-[24px] text-[#1b2d46] mb-2.5 font-bold">Team Energy</h3>
+              <p className="text-[#68758a] text-[14px] leading-relaxed mb-5">
+                Team Energy հավելվածի միջոցով կարող եք գտնել մոտակա էլեկտրական լիցքավորման կայանը, հետևելով քայլերի հաջորդականությանը՝ հեշտությամբ լիցքավորել մեքենան։
+              </p>
+            </div>
+            <div>
+              <Link to="/team-energy" className="bg-[#f55252] text-white px-[30px] py-2.5 rounded-[25px] no-underline font-semibold inline-block hover:bg-[#e04444] transition-colors">
+                Միանալ
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

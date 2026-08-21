@@ -1,10 +1,14 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Star, StarHalf } from 'lucide-react';
 import TeamTVGallery from '../components/TeamTVGallery';
 import AppsSection from '../components/AppsSection';
 
 export default function TeamTV() {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <div className="w-full min-h-screen bg-white font-sans pt-[30px]">
       <div className="w-[82%] mx-auto">

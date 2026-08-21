@@ -1,6 +1,10 @@
-import React from "react";
+import React, { useEffect } from "react";
 
 export default function MyTeamGallery() {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   const images = [
     "https://www.telecomarmenia.am/images/team_apps/1/17709643063824.jpeg",
     "https://www.telecomarmenia.am/images/team_apps/1/17709643062114.jpeg",

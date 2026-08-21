@@ -1,7 +1,11 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Star } from "lucide-react";
 
 export default function TeamEnergyHero() {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <div className="mb-[60px] flex flex-col md:flex-row items-center md:items-start gap-8 max-w-7xl mx-auto px-4 overflow-hidden">
       <div className="w-[240px] h-[240px] bg-[#0f4965] rounded-[18px] flex justify-center items-center shrink-0 shadow-md">

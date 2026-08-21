@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "./firebase";
@@ -12,6 +12,12 @@ import ChatWidget from "./components/ChatWidget";
 
 import Home from "./pages/Home";
 import Eshop from "./pages/Eshop";
+import EshopTerms from "./components/EshopTerms";
+import ApalikPaymanner from "./components/ApalikPaymanner";
+import DeliveryTerms from "./components/DeliveryTerms";
+import Coverage from "./components/Coverage";
+import InternetCoverageForm from "./components/InternetCoverageForm";
+import UsefulDocuments from "./components/UsefulDocuments";
 import Business from "./pages/Business";
 import BillPaymentForm from "./components/BillPaymentForm";
 
@@ -20,6 +26,18 @@ import MyTeam from "./pages/MyTeam";
 import TeamPay from "./pages/TeamPay";
 import TeamEnergy from "./pages/TeamEnergy";
 import Profil from "./components/profil";
+import AboutUs from "./components/AboutUs";
+import Museum from "./components/Museum";
+import News from "./components/News";
+import Jobs from "./components/Jobs";
+import Reports from "./components/Reports";
+import Ethics from "./components/Ethics";
+import Sustainable from "./components/Sustainable";
+import Shareholders from "./components/Shareholders";
+import TermsAndConditions from "./components/TermsAndConditions";
+import Safety from "./components/Safety";
+import PartnersProcurement from "./components/PartnersProcurement";
+import PrivacyPolicy from "./components/PrivacyPolicy"; // <- ԱՎԵԼԱՑՎԱԾ Է
 
 import CosmoPage from "./components/CosmoPage";
 import ComboPage from "./components/ComboPage";
@@ -29,7 +47,6 @@ import Smart from "./pages/Smart";
 import HamarTan from "./pages/HamarTan";
 import Kompi from "./pages/Kompi";
 
-// Ծառայությունների ենթաէջեր
 import Carayutyun1 from "./pages/Carayutyun1";
 import Carayutyun2 from "./pages/Carayutyun2";
 import Carayutyun3 from "./pages/Carayutyun3";
@@ -45,6 +62,14 @@ import Ogtakar from "./pages/Ogtakar";
 import Shop1 from "./pages/Shop1";
 import Hetevel from "./pages/Hetevel";
 import Support from "./pages/Support";
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [pathname]);
+  return null;
+}
 
 function Layout() {
   const location = useLocation();
@@ -63,42 +88,78 @@ function Layout() {
 
   return (
     <>
+      <ScrollToTop />
       <Header />
 
       <Routes>
-        {/* ================= ԳԼԽԱՎՈՐ ԵՒ ԲԻԶՆԵՍ ================= */}
         <Route path="/" element={<Home />} />
         <Route path="/business" element={<Business />} />
         <Route path="/eshop" element={<Eshop />} />
+        <Route path="/eshop-terms" element={<EshopTerms />} />
+        <Route path="/apalik-paymanner" element={<ApalikPaymanner />} />
+        <Route path="/delivery-terms" element={<DeliveryTerms />} />
+        <Route path="/coverage" element={<Coverage />} />
+        <Route path="/coverage-map" element={<InternetCoverageForm />} />
+        <Route path="/internet-coverage" element={<InternetCoverageForm />} />
+        <Route path="/useful-documents" element={<UsefulDocuments />} />
         <Route path="/online-credit" element={<Shop1 />} />
         <Route path="/account" element={<Profil user={user} />} />
         <Route path="/login" element={<Login />} />
         <Route path="/subscription" element={<Hetevel />} />
 
-        {/* ================= ԲՋՋԱՅԻՆ ԿԱՊ ԵՒ ՍԱԿԱԳՆԵՐ ================= */}
+        <Route path="/about" element={<AboutUs />} />
+        <Route path="/museum" element={<Museum />} />
+        <Route path="/news" element={<News />} />
+        <Route path="/norutyunner" element={<News />} />
+
+        <Route path="/jobs" element={<Jobs />} />
+        <Route path="/ashxatanq" element={<Jobs />} />
+
+        <Route path="/reports" element={<Reports />} />
+        <Route path="/ardyunqner" element={<Reports />} />
+
+        <Route path="/ethics" element={<Ethics />} />
+        <Route path="/gorcarar-ethics" element={<Ethics />} />
+
+        <Route path="/sustainable" element={<Sustainable />} />
+        <Route path="/kayun-zargacum" element={<Sustainable />} />
+
+        <Route path="/shareholders" element={<Shareholders />} />
+        <Route path="/bazhnetererin" element={<Shareholders />} />
+
+        <Route path="/partners" element={<PartnersProcurement />} />
+        <Route path="/gortsyntkernerin" element={<PartnersProcurement />} />
+
+        {/* Գաղտնիության քաղաքականության էջ */}
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+
+        <Route path="/terms" element={<TermsAndConditions />} />
+        <Route path="/TermsAndConditions" element={<TermsAndConditions />} />
+        <Route path="/general-terms" element={<TermsAndConditions />} />
+        <Route path="/paymanner" element={<TermsAndConditions />} />
+
+        <Route path="/safety" element={<Safety />} />
+        <Route path="/security" element={<Safety />} />
+        <Route path="/anvtangutyun" element={<Safety />} />
+
         <Route path="/tariffs" element={<Mobile />} />
         <Route path="/tariffs/mobile" element={<Mobile />} />
         <Route path="/tariffs/fixed" element={<TariffsFixed />} />
         <Route path="/internet/smartphone" element={<Smart />} />
         <Route path="/smart" element={<Smart />} />
 
-        {/* Տան համար - Կոսմո */}
         <Route path="/tariffs/combo" element={<CosmoPage />} />
         <Route path="/internet/home-combo" element={<CosmoPage />} />
 
-        {/* ՍԱԿԱԳՆԵՐԻ ԿՈՄԲՕ (ComboPage) */}
         <Route path="/tariffs/combi" element={<ComboPage />} />
         <Route path="/tariffs/combos" element={<ComboPage />} />
 
-        {/* ԻՆՏԵՐՆԵՏԻ ԿՈՄԲՕ (HamarTan) */}
         <Route path="/internet/home-combi" element={<HamarTan />} />
         <Route path="/internet/combo" element={<HamarTan />} />
 
-        {/* Համակարգչի / պլանշետի համար */}
         <Route path="/devices/computer" element={<Kompi />} />
         <Route path="/internet/device" element={<Kompi />} />
 
-        {/* ================= ԱՋԱԿՑՈՒԹՅՈՒՆ ԵՒ ՍԱՐՔԱՎՈՐՈՒՄՆԵՐ ================= */}
         <Route path="/support/settings" element={<Sarq />} />
         <Route path="/devices" element={<Sarq />} />
 
@@ -116,7 +177,6 @@ function Layout() {
         <Route path="/support" element={<Support />} />
         <Route path="/support/faq" element={<Support />} />
 
-        {/* ================= ՌՈՈՄԻՆԳ ԵՒ ՄԻՋԱԶԳԱՅԻՆ ================= */}
         <Route path="/roaming" element={<Room />} />
         <Route path="/support/roaming" element={<Room />} />
         <Route path="/roaming/map" element={<Room />} />
@@ -130,7 +190,6 @@ function Layout() {
         <Route path="/services" element={<Car />} />
         <Route path="/car" element={<Car />} />
 
-        {/* ================= ԾԱՌԱՅՈՒԹՅՈՒՆՆԵՐ ԵՒ ՀԱՎԵԼՎԱԾՆԵՐ ================= */}
         <Route path="/services/team-tv" element={<Carayutyun1 />} />
         <Route path="/services/payment" element={<Carayutyun2 />} />
         <Route path="/services/entertainment" element={<Carayutyun3 />} />
@@ -145,7 +204,6 @@ function Layout() {
       </Routes>
 
       {!hideLayout && <Footer />}
-
       {!hideLayout && !authLoading && <ChatWidget user={user} />}
     </>
   );

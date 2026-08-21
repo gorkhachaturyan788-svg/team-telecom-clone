@@ -1,7 +1,11 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Star } from "lucide-react";
 
 export default function MyTeamHero() {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <div className="mb-[60px] flex flex-col sm:flex-row items-start gap-[35px]">
       <div className="w-[240px] h-[240px] bg-[#0f4965] rounded-[18px] flex justify-center items-center shrink-0">
@@ -13,7 +17,6 @@ export default function MyTeamHero() {
       </div>
 
       <div className="mt-[20px] flex flex-col gap-[25px]">
- 
         <div className="flex items-center gap-[20px]">
           <a href="#" className="block">
             <img 
@@ -31,7 +34,6 @@ export default function MyTeamHero() {
           </div>
         </div>
 
-       
         <div className="flex items-center gap-[20px]">
           <a href="#" className="block">
             <img 

@@ -1,52 +1,57 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { Link } from "react-router-dom";
 
 export default function MyTeamOtherApps() {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
-    <div className="my-[80px]">
-      <h2 className="text-[32px] text-[#1b2d46] mb-[40px] font-bold">
+    <div className="py-[60px] max-w-7xl mx-auto px-4 overflow-hidden">
+      <h2 className="text-[32px] text-[#1b2d46] mb-10 font-bold">
         Այլ հավելվածներ
       </h2>
       
-      <div className="flex flex-col lg:flex-row gap-[40px]">
-        <div className="flex flex-col sm:flex-row items-start gap-[25px] flex-1">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 p-6 bg-white rounded-3xl shadow-sm border border-gray-100 h-full justify-between">
           <img 
             src="https://www.telecomarmenia.am/images/team_apps/1/17249416402556.png" 
             alt="TeamTV" 
-            className="w-[220px] h-[220px] rounded-[20px] shrink-0 object-cover" 
+            className="w-[160px] h-[160px] rounded-[20px] object-cover shrink-0" 
           />
-          <div className="flex flex-col gap-[15px]">
-            <h3 className="text-[24px] text-[#1b2d46] m-0">TeamTV</h3>
-            <p className="text-[#68758a] text-[16px] m-0">
-              Ժամանակակից TV միշտ քեզ հետ<br />
-              Մինչև 200 ալիք<br />
-              Ավելի քան 5000 ֆիլմ տեսադարանում<br />
-              Դիտում 5 սարքավորումներով<br />
-              Մինչև 7 օր catch-up...
-            </p>
-            <button className="w-[160px] bg-[#f55252] text-white border-none py-3 rounded-[25px] cursor-pointer font-semibold hover:bg-[#e04545] transition-colors">
-              Միանալ
-            </button>
+          <div className="flex flex-col justify-between h-full text-center sm:text-left w-full">
+            <div>
+              <h3 className="text-[24px] text-[#1b2d46] mb-2.5 font-bold">TeamTV</h3>
+              <p className="text-[#68758a] text-[14px] leading-relaxed mb-5">
+                Ժամանակակից TV միշտ քեզ հետ։ Մինչև 200 ալիք, ավելի քան 5000 ֆիլմ տեսադարանում, դիտում 5 սարքավորումներով, մինչև 7 օր catch-up։
+              </p>
+            </div>
+            <div>
+              <Link to="/teamtv" className="bg-[#f55252] text-white px-[30px] py-2.5 rounded-[25px] no-underline font-semibold inline-block hover:bg-[#e04444] transition-colors">
+                Միանալ
+              </Link>
+            </div>
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-start gap-[25px] flex-1">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 p-6 bg-white rounded-3xl shadow-sm border border-gray-100 h-full justify-between">
           <img 
             src="https://www.telecomarmenia.am/images/team_apps/1/17691688001842.png" 
             alt="Team Energy" 
-            className="w-[220px] h-[220px] rounded-[20px] shrink-0 object-cover" 
+            className="w-[160px] h-[160px] rounded-[20px] object-cover shrink-0" 
           />
-          <div className="flex flex-col gap-[15px]">
-            <h3 className="text-[24px] text-[#1b2d46] m-0">Team Energy</h3>
-            <p className="text-[#68758a] text-[16px] m-0">
-              Team Energy հավելվածի միջոցով<br />
-              կարող եք գտնել մոտակա<br />
-              էլեկտրական լիցքավորման<br />
-              կայանը, հետևելով քայլերի<br />
-              հաջորդականությանը՝...
-            </p>
-            <button className="w-[160px] bg-[#f55252] text-white border-none py-3 rounded-[25px] cursor-pointer font-semibold hover:bg-[#e04545] transition-colors">
-              Միանալ
-            </button>
+          <div className="flex flex-col justify-between h-full text-center sm:text-left w-full">
+            <div>
+              <h3 className="text-[24px] text-[#1b2d46] mb-2.5 font-bold">Team Energy</h3>
+              <p className="text-[#68758a] text-[14px] leading-relaxed mb-5">
+                Team Energy հավելվածի միջոցով կարող եք գտնել մոտակա էլեկտրական լիցքավորման կայանը, հետևելով քայլերի հաջորդականությանը՝ հեշտությամբ լիցքավորել մեքենան։
+              </p>
+            </div>
+            <div>
+              <Link to="/team-energy" className="bg-[#f55252] text-white px-[30px] py-2.5 rounded-[25px] no-underline font-semibold inline-block hover:bg-[#e04444] transition-colors">
+                Միանալ
+              </Link>
+            </div>
           </div>
         </div>
       </div>
