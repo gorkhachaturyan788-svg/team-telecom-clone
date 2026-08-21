@@ -25,8 +25,8 @@ import TeamTV from "./pages/TeamTV";
 import MyTeam from "./pages/MyTeam";
 import TeamPay from "./pages/TeamPay";
 import TeamEnergy from "./pages/TeamEnergy";
-import Profil from "./components/profil";
-import AboutUs from "./components/AboutUs";
+import Profil from "./components/Profil";
+import AboutUS from "./components/AboutUS";
 import Museum from "./components/Museum";
 import News from "./components/News";
 import Jobs from "./components/Jobs";
@@ -37,7 +37,7 @@ import Shareholders from "./components/Shareholders";
 import TermsAndConditions from "./components/TermsAndConditions";
 import Safety from "./components/Safety";
 import PartnersProcurement from "./components/PartnersProcurement";
-import PrivacyPolicy from "./components/PrivacyPolicy"; // <- ԱՎԵԼԱՑՎԱԾ Է
+import PrivacyPolicy from "./components/PrivacyPolicy";
 
 import CosmoPage from "./components/CosmoPage";
 import ComboPage from "./components/ComboPage";
@@ -107,7 +107,7 @@ function Layout() {
         <Route path="/login" element={<Login />} />
         <Route path="/subscription" element={<Hetevel />} />
 
-        <Route path="/about" element={<AboutUs />} />
+        <Route path="/about" element={<AboutUS />} />
         <Route path="/museum" element={<Museum />} />
         <Route path="/news" element={<News />} />
         <Route path="/norutyunner" element={<News />} />
@@ -130,7 +130,6 @@ function Layout() {
         <Route path="/partners" element={<PartnersProcurement />} />
         <Route path="/gortsyntkernerin" element={<PartnersProcurement />} />
 
-        {/* Գաղտնիության քաղաքականության էջ */}
         <Route path="/privacy" element={<PrivacyPolicy />} />
 
         <Route path="/terms" element={<TermsAndConditions />} />
