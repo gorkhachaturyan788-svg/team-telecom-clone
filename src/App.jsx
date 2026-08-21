@@ -25,7 +25,7 @@ import TeamTV from "./pages/TeamTV";
 import MyTeam from "./pages/MyTeam";
 import TeamPay from "./pages/TeamPay";
 import TeamEnergy from "./pages/TeamEnergy";
-import Profil from "./components/Profil";
+import Profil from "./components/profil"; // Ուղղված է՝ փոքրատառ 'p'-ով
 import AboutUS from "./components/AboutUS";
 import Museum from "./components/Museum";
 import News from "./components/News";
