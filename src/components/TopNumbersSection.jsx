@@ -24,7 +24,7 @@ const numbers = [
 
 export default function TopNumbersSection() {
   return (
-    <section className="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8 overflow-hidden">
+    <section className="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
       <h2 className="text-3xl font-bold text-[#1b2d46] mb-8">
         Top Համարներ
       </h2>
@@ -33,7 +33,11 @@ export default function TopNumbersSection() {
         {numbers.map((item) => (
           <NumberCard
             key={item.id}
-            {...item}
+            id={item.id}
+            badge={item.badge}
+            number={item.number}
+            price={item.price}
+            oldPrice={item.oldPrice}
           />
         ))}
       </div>

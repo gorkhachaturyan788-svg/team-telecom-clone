@@ -1,9 +1,13 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useCartStore } from "./useCartStore"; // Ներմուծում ենք Zustand զամբյուղի սթորը
 
 export default function Header() {
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [isTopMenuOpen, setIsTopMenuOpen] = useState(false);
+
+  // Վերցնում ենք զամբյուղի ապրանքների քանակը Zustand-ից
+  const cart = useCartStore((state) => state.cart);
 
   const menuItems = [
     {
@@ -80,6 +84,7 @@ export default function Header() {
           </Link>
         </div>
 
+        {/* Աջ հատված (Դեսկտոպ) */}
         <div className="hidden md:flex items-center h-full">
           <div className="px-3 cursor-pointer hover:text-gray-300">
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
@@ -91,12 +96,37 @@ export default function Header() {
           <span className="text-[#005a75]">|</span>
           <Link to="#" className="px-3 hover:text-gray-300">Eng</Link>
           <span className="text-[#005a75] px-3">|</span>
-          <Link to="/login" className="flex items-center pr-4 gap-2 hover:text-gray-300">
+          
+          {/* Անձնական գրասենյակ */}
+          <Link to="/login" className="flex items-center px-3 gap-2 hover:text-gray-300">
             <span>👤</span> Անձնական գրասենյակ 
+          </Link>
+
+          <span className="text-[#005a75]">|</span>
+
+          {/* ԶԱՄԲՅՈՒՂԻ ՆԿԱՐԸ (Անձնական գրասենյակի կողքին) */}
+          <Link to="/cart" className="flex items-center pl-3 pr-2 relative hover:text-gray-300">
+            <span className="text-lg">🛒</span>
+            {cart.length > 0 && (
+              <span className="absolute -top-1 right-1 bg-red-600 text-white rounded-full text-[10px] w-4 h-4 flex items-center justify-center font-bold">
+                {cart.length}
+              </span>
+            )}
           </Link>
         </div>
 
-        <div className="flex md:hidden items-center h-full">
+        {/* Աջ հատված (Մոբայլ) */}
+        <div className="flex md:hidden items-center h-full gap-2">
+          {/* Մոբայլ զամբյուղի նկար */}
+          <Link to="/cart" className="flex items-center px-2 relative">
+            <span className="text-base">🛒</span>
+            {cart.length > 0 && (
+              <span className="absolute top-0 right-0 bg-red-600 text-white rounded-full text-[9px] w-3.5 h-3.5 flex items-center justify-center font-bold">
+                {cart.length}
+              </span>
+            )}
+          </Link>
+
           <button 
             onClick={() => setIsTopMenuOpen(!isTopMenuOpen)}
             className="flex items-center gap-1 px-3 bg-[#002d44] h-full text-xs"
@@ -134,7 +164,6 @@ export default function Header() {
           <img src="https://www.telecomarmenia.am/img/fb-share.png?v=2" alt="Team Telecom" className="h-[40px] lg:h-[50px] w-auto object-contain" />
         </Link>
 
-        {/* Փոփոխված հատվածը՝ կենտրոնացման և չկորչելու համար */}
         <nav className="flex flex-wrap items-center justify-center lg:h-full gap-x-1 xl:gap-x-2 gap-y-2 relative flex-1 max-w-4xl mx-auto">
           {menuItems.map((item, index) => (
             <div

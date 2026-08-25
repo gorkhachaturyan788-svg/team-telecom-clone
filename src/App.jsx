@@ -9,6 +9,7 @@ import Login from "./components/Login";
 import Mobile from "./components/Mobile";
 import TariffsFixed from "./pages/TariffsFixed";
 import ChatWidget from "./components/ChatWidget";
+import Cart from "./components/Cart";
 
 import Home from "./pages/Home";
 import Eshop from "./pages/Eshop";
@@ -25,7 +26,7 @@ import TeamTV from "./pages/TeamTV";
 import MyTeam from "./pages/MyTeam";
 import TeamPay from "./pages/TeamPay";
 import TeamEnergy from "./pages/TeamEnergy";
-import Profil from "./components/profil"; // Ուղղված է՝ փոքրատառ 'p'-ով
+import Profil from "./components/profil"; 
 import AboutUS from "./components/AboutUS";
 import Museum from "./components/Museum";
 import News from "./components/News";
@@ -93,6 +94,7 @@ function Layout() {
 
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/cart" element={<Cart />} /> 
         <Route path="/business" element={<Business />} />
         <Route path="/eshop" element={<Eshop />} />
         <Route path="/eshop-terms" element={<EshopTerms />} />
