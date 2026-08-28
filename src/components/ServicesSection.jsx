@@ -1,25 +1,30 @@
 import { useEffect, useState, useRef } from "react";
+import { Link } from "react-router-dom"; // Ներմուծում ենք Link-ը
 
 const services = [
   {
     id: 1,
     title: "ԲՋՋԱՅԻՆ ԿԱՊ",
     img: "https://www.telecomarmenia.am/images/advanced_slider/2/17574203779594.jpeg",
+    to: "/tariffs/mobile", // Ավելացրեցինք հղման ուղին
   },
   {
     id: 2,
     title: "ՖԻՔՍՎԱԾ ԿԱՊ",
     img: "https://www.telecomarmenia.am/images/team_apps/1/16510708696227.png",
+    to: "/tariffs/fixed", // Օրինակի համար կարող եք փոխել կամ ավելացնել մյուսների համար էլ
   },
   {
     id: 3,
     title: "ՀԱՎԵԼՎԱԾՆԵՐ",
     img: "https://www.telecomarmenia.am/images/block_with_news_slides/1/17225928741325.png",
+    to: "/services/entertainment",
   },
   {
     id: 4,
     title: "ԻՆՏԵՐՆԵՏ ԵՎ TV",
     img: "https://armlur.am/wp-content/uploads/2026/03/1500.png",
+    to: "/tariffs/combo",
   },
 ];
 
@@ -62,14 +67,17 @@ export default function ServicesSection() {
                       : "md:translate-x-20 md:opacity-0 md:scale-95")
               }`}
           >
-  
             <div className="space-y-3 sm:space-y-4 text-center sm:text-left w-full sm:w-auto">
               <h3 className="text-2xl sm:text-3xl font-black text-blue-950">
                 {service.title}
               </h3>
-              <button className="text-orange-600 text-base sm:text-lg font-bold hover:underline">
+              {/* Փոխարինել ենք button-ը Link-ով և ավելացրել to ատրիբուտը */}
+              <Link 
+                to={service.to} 
+                className="inline-block text-orange-600 text-base sm:text-lg font-bold hover:underline"
+              >
                 Ավելին ›
-              </button>
+              </Link>
             </div>
 
             {/* Նկարի մաս */}

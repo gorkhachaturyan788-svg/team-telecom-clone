@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useCartStore } from "./useCartStore"; // Ներմուծում ենք Zustand զամբյուղի սթորը
+import { useCartStore } from "./useCartStore"; 
 
 export default function Header() {
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [isTopMenuOpen, setIsTopMenuOpen] = useState(false);
 
-  // Վերցնում ենք զամբյուղի ապրանքների քանակը Zustand-ից
   const cart = useCartStore((state) => state.cart);
 
   const menuItems = [
@@ -83,8 +82,6 @@ export default function Header() {
             <span>🛒</span> E-shop
           </Link>
         </div>
-
-        {/* Աջ հատված (Դեսկտոպ) */}
         <div className="hidden md:flex items-center h-full">
           <div className="px-3 cursor-pointer hover:text-gray-300">
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
@@ -97,14 +94,12 @@ export default function Header() {
           <Link to="#" className="px-3 hover:text-gray-300">Eng</Link>
           <span className="text-[#005a75] px-3">|</span>
           
-          {/* Անձնական գրասենյակ */}
           <Link to="/login" className="flex items-center px-3 gap-2 hover:text-gray-300">
             <span>👤</span> Անձնական գրասենյակ 
           </Link>
 
           <span className="text-[#005a75]">|</span>
 
-          {/* ԶԱՄԲՅՈՒՂԻ ՆԿԱՐԸ (Անձնական գրասենյակի կողքին) */}
           <Link to="/cart" className="flex items-center pl-3 pr-2 relative hover:text-gray-300">
             <span className="text-lg">🛒</span>
             {cart.length > 0 && (
