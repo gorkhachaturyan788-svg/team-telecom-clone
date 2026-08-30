@@ -227,6 +227,38 @@ export default function DirectChatWidget({ user }) {
     return () => unsubscribe();
   }, [isLoggedIn, user?.uid, endCallCleanup]);
 
+  // Ելքային զանգի կարգավիճակի լսում (զանգողի կողմից)
+  // ԿԱՐԵՎՈՐ. սա նոր effect է. զանգողը պետք է հետևի իր իսկ ստեղծած
+  // active_calls/{partnerUid} document-ին, որպեսզի իմանա, թե երբ է
+  // մյուս կողմը պատասխանել (status: "accepted") կամ երբ document-ը
+  // ջնջվել է (նշանակում է՝ մյուսը մերժել/կտրել է զանգը)։ Առանց սրա,
+  // զանգողի էկրանին հավերժ մնում էր "Զանգահարում է..." նույնիսկ եթե
+  // մյուս կողմն արդեն պատասխանել էր։
+  useEffect(() => {
+    if (!isLoggedIn || !activeCall || activeCall.isIncoming) return;
+
+    const partnerCallDocRef = doc(db, "active_calls", activeCall.callId);
+    const unsubscribe = onSnapshot(
+      partnerCallDocRef,
+      (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data?.status === "accepted") {
+            setActiveCall((prev) =>
+              prev && !prev.isIncoming ? { ...prev, connected: true } : prev
+            );
+          }
+        } else {
+          // Մյուս կողմը մերժել/կտրել է զանգը, մինչ մենք սպասում էինք
+          endCallCleanup();
+        }
+      },
+      (err) => console.error("Outgoing call status listener error:", err)
+    );
+
+    return () => unsubscribe();
+  }, [isLoggedIn, activeCall?.callId, activeCall?.isIncoming, endCallCleanup]);
+
   // Հաղորդագրությունների լսում
   useEffect(() => {
     if (!isLoggedIn || !user?.uid || !activePartner) {
@@ -315,6 +347,18 @@ export default function DirectChatWidget({ user }) {
         isIncoming: false,
         connected: true,
       }));
+
+      // ԿԱՐԵՎՈՐ. պատասխանելիս պետք է Firestore-ում գրանցել "accepted"
+      // կարգավիճակը, հակառակ դեպքում զանգողի կողմը երբեք չի իմանա, որ
+      // մյուսը պատասխանել է, քանի որ acceptCall-ը մինչ այժ միայն local
+      // state էր փոխում։ Այս document-ը հենց ընդունողի սեփական
+      // active_calls/{myUid} document-ն է (որը զանգողն է ստեղծել
+      // ringing status-ով startCall-ի ժամանակ).
+      if (user?.uid) {
+        await updateDoc(doc(db, "active_calls", user.uid), {
+          status: "accepted",
+        });
+      }
     } catch (err) {
       console.error("Accept call error:", err);
       endCallCleanup();
