@@ -1,35 +1,101 @@
-import { useState, useEffect } from "react";
-import { signOut } from "firebase/auth";
+import { useState, useEffect, useRef } from "react";
+import { signOut, updateProfile } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
-import { auth } from "../firebase";
+import { auth, db } from "../firebase";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 
 export default function Profil({ user }) {
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
 
   const [activeMenu, setActiveMenu] = useState(() => {
     return localStorage.getItem("activeMenu") || "data";
   });
 
+  const currentUser = user || auth.currentUser;
+  
+  const [profileImage, setProfileImage] = useState(currentUser?.photoURL || "");
+  const [displayName, setDisplayName] = useState(
+    currentUser?.displayName || currentUser?.email?.split("@")[0] || "Օգտատեր"
+  );
+  const [uploading, setUploading] = useState(false);
+
   useEffect(() => {
     localStorage.setItem("activeMenu", activeMenu);
   }, [activeMenu]);
 
+  // Բազայից օգտատիրոջ տվյալների ստուգում
+  useEffect(() => {
+    async function fetchUserData() {
+      if (!currentUser?.uid) return;
+      try {
+        const userDocRef = doc(db, "users", currentUser.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          if (data.photoURL && data.photoURL.startsWith("http")) {
+            setProfileImage(data.photoURL);
+          }
+          if (data.name) setDisplayName(data.name);
+        }
+      } catch (err) {
+        console.error("Error fetching user data:", err);
+      }
+    }
+    fetchUserData();
+  }, [currentUser]);
+
   const handleLogout = async () => {
     try {
-      console.log("Logout...");
       localStorage.removeItem("activeMenu");
       await signOut(auth);
-      console.log("Logout success");
       navigate("/login"); 
     } catch (error) {
       console.error(error);
     }
   };
 
-  const currentUser = user || auth.currentUser;
-  const displayName = currentUser?.displayName || currentUser?.email?.split("@")[0] || "Օգտատեր";
-  const profileImage = currentUser?.photoURL;
-  const initial = displayName.charAt(0).toUpperCase();
+  // Նկարի բեռնում Cloudinary
+  const handleImageChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file || !currentUser?.uid) return;
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", "voice_upload");
+
+      const res = await fetch(
+        "https://api.cloudinary.com/v1_1/t0eyfav7/image/upload",
+        { method: "POST", body: formData }
+      );
+
+      const data = await res.json();
+      if (!data.secure_url) throw new Error("Image upload failed");
+
+      const newPhotoUrl = data.secure_url;
+
+      // Թարմացնել Firebase Auth-ում
+      await updateProfile(auth.currentUser, { photoURL: newPhotoUrl });
+
+      // Թարմացնել Firestore-ում
+      await setDoc(
+        doc(db, "users", currentUser.uid),
+        { photoURL: newPhotoUrl, updatedAt: new Date() },
+        { merge: true }
+      );
+
+      setProfileImage(newPhotoUrl);
+    } catch (err) {
+      console.error("Failed to upload profile image:", err);
+      alert("Չհաջողվեց վերբեռնել նկարը:");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const initial = displayName ? displayName.charAt(0).toUpperCase() : "Օ";
 
   return (
     <div className="flex flex-col lg:flex-row min-h-[calc(100vh-100px)] font-sans bg-[#f4f6f9] p-4 sm:p-6 gap-6">
@@ -39,17 +105,50 @@ export default function Profil({ user }) {
         <div>
           {/* User Info Header */}
           <div className="p-5 border-b border-[#e2e8f0] flex items-center gap-3.5 bg-gradient-to-br from-slate-50 to-white">
-            {profileImage ? (
-              <img 
-                src={profileImage} 
-                alt="Profile" 
-                className="w-12 h-12 rounded-full object-cover border-2 border-[#00bcd4] shadow-sm shrink-0" 
-              />
-            ) : (
-              <div className="w-12 h-12 rounded-full bg-[#00bcd4] text-white flex items-center justify-center font-bold text-lg shadow-sm shrink-0">
-                {initial}
-              </div>
-            )}
+            
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleImageChange} 
+              accept="image/*" 
+              className="hidden" 
+            />
+            
+            <div 
+              onClick={() => fileInputRef.current?.click()}
+              className="relative cursor-pointer group shrink-0"
+              title="Սեղմեք նկարը փոխելու համար"
+            >
+              {/* ԱՅՍՏԵՂ ԷԻՆ ՓՈԽՎԵԼ ՀԻՄՆԱԿԱՆ ՍՏՈՒԳՈՒՄՆԵՐԸ */}
+              {profileImage && profileImage.startsWith("http") ? (
+                <img 
+                  src={profileImage} 
+                  alt="Profile" 
+                  className="w-12 h-12 rounded-full object-cover border-2 border-[#00bcd4] shadow-sm"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                  }}
+                />
+              ) : currentUser?.photoURL && currentUser.photoURL.startsWith("http") ? (
+                <img 
+                  src={currentUser.photoURL} 
+                  alt="Profile" 
+                  className="w-12 h-12 rounded-full object-cover border-2 border-[#00bcd4] shadow-sm"
+                />
+              ) : (
+                <div className="w-12 h-12 rounded-full bg-[#00bcd4] text-white flex items-center justify-center font-bold text-lg shadow-sm">
+                  {initial}
+                </div>
+              )}
+              
+              {/* Վերբեռնման պահի ինդիկատոր */}
+              {uploading && (
+                <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center text-[10px] text-white">
+                  ...
+                </div>
+              )}
+            </div>
+
             <div className="overflow-hidden">
               <h3 className="text-[14px] font-bold text-[#0f172a] truncate">
                 {displayName}
