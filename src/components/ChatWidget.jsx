@@ -146,6 +146,18 @@ export default function DirectChatWidget({ user }) {
       remoteVideoRef.current &&
       remoteVideoRef.current.srcObject !== stream
     ) {
+      // ԿԱՐԵՎՈՐ. remote video-ն դիտավորյալ muted ենք պահում։ Ձայնը
+      // արդեն ամբողջությամբ նվագարկվում է առանձին <audio> element-ից
+      // (տես ներքևում), ուստի video element-ի audio track-ը պետք չէ։
+      // Սա երկու նպատակ ունի.
+      //   1) Կանխում է կրկնակի ձայնը (նույն audio track-ը երկու
+      //      տարբեր element-ից նվագարկվելը)։
+      //   2) Բազմաթիվ browser-ներ (հատկապես iOS Safari) արգելափակում
+      //      են unmuted <video>-ի autoplay-ը առանց ուղիղ user gesture-ի,
+      //      ինչի պատճառով remote video-ն կախված/սև էր մնում, նույնիսկ
+      //      երբ track-ը իրականում ստացվում էր։ muted video-ի autoplay-ը
+      //      արգելափակված չէ։
+      remoteVideoRef.current.muted = true;
       remoteVideoRef.current.srcObject = stream;
       remoteVideoRef.current
         .play()
@@ -227,9 +239,24 @@ export default function DirectChatWidget({ user }) {
     // Այժմ pc.ontrack-ը պահում է stream-ը ref-ում և կանչում է
     // attachRemoteStream()-ը, որը և՛ միշտ ամրացնում է audio element-ին
     // (անկախ զանգի տեսակից), և՛ explicit .play() է անում։
+    // ԿԱՐԵՎՈՐ ՈՒՂՂՈՒՄ ("AbortError: play() interrupted by a new load
+    // request"). pc.ontrack-ը կրակում է ԱՌԱՆՁԻՆ յուրաքանչյուր track-ի
+    // համար (մեկ անգամ՝ աուդիո track-ի, մեկ անգամ՝ video track-ի
+    // համար)։ Որոշ browser-ներում event.streams[0]-ը այս երկու
+    // դեպքերում ՆՈՒՅՆ object reference-ը չէ, ուստի մեր հին կոդը
+    // srcObject-ը վերագրում էր երկրորդ անգամ, մինչ առաջին .play()-ը
+    // դեռ pending էր՝ ինչը հենց առաջացնում էր այս error-ը։
+    // Լուծումը. ստեղծում ենք ՄԵԿ մշտական MediaStream ինքներս և
+    // ուղղակի ավելացնում ենք դրան ստացված track-երը մեկ-մեկ։ Այդպես
+    // srcObject-ը video/audio element-ներին վերագրվում է ՄԻԱՅՆ ՄԵԿ
+    // ԱՆԳԱՄ, անկախ նրանից՝ քանի track-ի ontrack կկանչվի։
     pc.ontrack = (event) => {
-      const [remoteStream] = event.streams;
-      remoteStreamRef.current = remoteStream;
+      if (!remoteStreamRef.current) {
+        remoteStreamRef.current = new MediaStream();
+      }
+      if (!remoteStreamRef.current.getTracks().includes(event.track)) {
+        remoteStreamRef.current.addTrack(event.track);
+      }
       attachRemoteStream();
     };
 
@@ -864,6 +891,7 @@ export default function DirectChatWidget({ user }) {
                     ref={remoteVideoRef}
                     autoPlay
                     playsInline
+                    muted
                     className="w-full h-full object-cover"
                   />
                   <video
