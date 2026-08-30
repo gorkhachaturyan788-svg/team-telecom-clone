@@ -210,6 +210,7 @@ export default function DirectChatWidget({ user }) {
             setActiveCall({
               callId: user.uid,
               callerName: callData.callerName,
+              callerUid: callData.callerUid,
               type: callData.type,
               isIncoming: true,
             });
@@ -273,6 +274,7 @@ export default function DirectChatWidget({ user }) {
     setActiveCall({
       callId: activePartner.uid,
       callerName: partnerName,
+      callerUid: activePartner.uid,
       type,
       isIncoming: false,
     });
@@ -321,12 +323,18 @@ export default function DirectChatWidget({ user }) {
 
   // Երկկողմանի (և ինքնուրույն) զանգի փակում՝ ջնջում ենք երկուսի
   // active_calls փաստաթղթերն էլ, երբ օգտատերը ինքն է կտրում զանգը։
+  // ԿԱՐԵՎՈՐ. մյուս կողմի uid-ը վերցնում ենք activeCall.callerUid-ից,
+  // ոչ թե activePartner-ից, քանի որ ընդունողի (incoming call) կողմից
+  // activePartner-ը դատարկ է. incoming call-ը գալիս է active_calls
+  // listener-ից, ոչ թե զրուցակցի ընտրությունից։ Հենց սա էր պատճառը,
+  // որ հեռախոսում (զանգողի կողմից) document-ը երբեք չէր ջնջվում, երբ
+  // notebook-ից (ընդունողից) սեղմում էին "անջատել"։
   async function hangUp() {
-    const partnerUid = activePartner?.uid;
+    const otherUid = activeCall?.callerUid || activePartner?.uid;
     await endCallCleanup();
-    if (partnerUid) {
+    if (otherUid) {
       try {
-        await deleteDoc(doc(db, "active_calls", partnerUid));
+        await deleteDoc(doc(db, "active_calls", otherUid));
       } catch (err) {
         console.error("Failed to clear partner active_calls doc:", err);
       }
