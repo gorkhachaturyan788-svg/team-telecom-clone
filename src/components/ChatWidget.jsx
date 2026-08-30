@@ -104,6 +104,12 @@ export default function DirectChatWidget({ user }) {
   // "ամրացնել" stream-ը element-ներին, հենց նրանք հասանելի դառնան։
   const remoteStreamRef = useRef(null);
 
+  // Կանխում ենք startCall-ի կրկնակի/համընկնող կանչերը (օր. արագ
+  // կրկնակի սեղմումով), որոնք կստեղծեին ԵՐԿՐՈՐԴ getUserMedia
+  // stream մինչ առաջինը դեռ ընթացքի մեջ է, և առաջինի track-երը
+  // երբեք չէին stop() արվի (camera-ի light-ը մնում է վառ)
+  const startingCallRef = useRef(false);
+
   const ICE_SERVERS = [
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
@@ -195,6 +201,7 @@ export default function DirectChatWidget({ user }) {
     pendingCandidatesRef.current = [];
     remoteDescSetRef.current = false;
     remoteStreamRef.current = null;
+    startingCallRef.current = false;
     setActiveCall(null);
     activeCallRef.current = null;
 
@@ -380,14 +387,38 @@ export default function DirectChatWidget({ user }) {
   }, [isLoggedIn, user?.uid, endCallCleanup]);
 
   // Ելքային զանգի կարգավիճակի լսում (զանգողի կողմից)
+  //
+  // ԿԱՐԵՎՈՐ ՈՒՂՂՈՒՄ. այս listener-ը սկսում է աշխատել անմիջապես, երբ
+  // activeCall.callId-ը սահմանվում է (startCall()-ի սկզբում), ԲԱՅՑ
+  // active_calls/{roomId} document-ն ինքը ստեղծվում է ԱՎԵԼԻ ՈՒՇ՝
+  // getUserMedia()-ից և offer-ի ստեղծումից հետո։ Հետևաբար այս
+  // listener-ի ԱՌԱՋԻՆ snapshot-ը գրեթե միշտ գալիս է "document-ը
+  // գոյություն չունի" վիճակով, նույնիսկ եթե ամեն ինչ նորմալ է
+  // ընթանում։ Հին կոդը դա սխալմամբ մեկնաբանում էր որպես "մյուս
+  // կողմը մերժեց/կտրեց զանգը" և անմիջապես կանչում էր
+  // endCallCleanup()՝ ջնջելով զանգի modal-ը զանգողի էկրանից, մինչ
+  // իրական զանգը դեռ նոր էր սկսվում ֆոնում (և իրականում հասնում էր
+  // մյուս կողմին)։
+  //
+  // Լուծումը. հետևում ենք՝ արդյոք document-ն ԱՐԴԵՆ ՄԵԿ ԱՆԳԱՄ
+  // հաստատված է եղել գոյություն ունենալ (callDocConfirmedRef)։
+  // endCallCleanup()-ը կանչում ենք ՄԻԱՅՆ եթե document-ն ԱՌԱՋ
+  // գոյություն ուներ և հետո ջնջվեց (սա նշանակում է իրական
+  // մերժում/կտրում մյուս կողմից), ոչ թե պարզապես դեռ չի ստեղծվել։
+  const callDocConfirmedRef = useRef(false);
+
   useEffect(() => {
     if (!isLoggedIn || !activeCall || activeCall.isIncoming) return;
+
+    // Նոր ելքային զանգ ենք սկսում՝ զրոյացնում ենք confirmation flag-ը
+    callDocConfirmedRef.current = false;
 
     const partnerCallDocRef = doc(db, "active_calls", activeCall.callId);
     const unsubscribe = onSnapshot(
       partnerCallDocRef,
       async (docSnap) => {
         if (docSnap.exists()) {
+          callDocConfirmedRef.current = true;
           const data = docSnap.data();
           if (data?.status === "accepted") {
             setActiveCall((prev) =>
@@ -405,9 +436,13 @@ export default function DirectChatWidget({ user }) {
               console.error("Failed to set remote description (answer):", err);
             }
           }
-        } else {
+        } else if (callDocConfirmedRef.current) {
+          // Document-ը ԱՌԱՋ գոյություն ուներ, հիմա՝ ոչ. սա իրական
+          // մերժում/կտրում է մյուս կողմից
           endCallCleanup();
         }
+        // else. document-ը դեռ պարզապես չի ստեղծվել (սովորական
+        // սկզբնական վիճակ) — ոչինչ չենք անում, սպասում ենք
       },
       (err) => console.error("Outgoing call status listener error:", err)
     );
@@ -517,6 +552,8 @@ export default function DirectChatWidget({ user }) {
   // --- ԶԱՆԳԻ ՍԿՍՈՒՄ (WebRTC offer ուղարկելով) ---
   async function startCall(type) {
     if (!activePartner || activePartner.isGroup) return;
+    if (startingCallRef.current || activeCall) return;
+    startingCallRef.current = true;
 
     const partnerName = activePartner.name || "Զրուցակից";
     const roomId = activePartner.uid;
@@ -556,6 +593,8 @@ export default function DirectChatWidget({ user }) {
       console.error("Call start error:", err);
       alert("Չհաջողվեց միացնել տեսախցիկը կամ միկրոֆոնը։");
       endCallCleanup();
+    } finally {
+      startingCallRef.current = false;
     }
   }
 
@@ -627,6 +666,7 @@ export default function DirectChatWidget({ user }) {
     pendingCandidatesRef.current = [];
     remoteDescSetRef.current = false;
     remoteStreamRef.current = null;
+    startingCallRef.current = false;
     setActiveCall(null);
     activeCallRef.current = null;
 
