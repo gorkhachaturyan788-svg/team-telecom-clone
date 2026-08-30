@@ -94,7 +94,7 @@ export default function DirectChatWidget({ user }) {
 
   const isLoggedIn = !!user;
 
-  // Օգտատիրոջ գրանցում/թարմացում բազայում (նկարի ճիշտ պահպանումով)
+  // Օգտատիրոջ գրանցում/թարմացում բազայում
   useEffect(() => {
     if (!isLoggedIn || !user?.uid) return;
 
@@ -114,7 +114,7 @@ export default function DirectChatWidget({ user }) {
     ).catch((err) => console.error("Failed to upsert user profile:", err));
   }, [isLoggedIn, user?.uid]);
 
-  // Բոլոր օգտատերերի բեռնում (Բացառելով հենց ներկա օգտատիրոջը)
+  // Բոլոր օգտատերերի բեռնում
   useEffect(() => {
     if (!isLoggedIn || !user?.uid) return;
     
