@@ -321,24 +321,49 @@ export default function DirectChatWidget({ user }) {
     }
   }
 
-  // Երկկողմանի (և ինքնուրույն) զանգի փակում՝ ջնջում ենք երկուսի
-  // active_calls փաստաթղթերն էլ, երբ օգտատերը ինքն է կտրում զանգը։
-  // ԿԱՐԵՎՈՐ. մյուս կողմի uid-ը վերցնում ենք activeCall.callerUid-ից,
-  // ոչ թե activePartner-ից, քանի որ ընդունողի (incoming call) կողմից
-  // activePartner-ը դատարկ է. incoming call-ը գալիս է active_calls
-  // listener-ից, ոչ թե զրուցակցի ընտրությունից։ Հենց սա էր պատճառը,
-  // որ հեռախոսում (զանգողի կողմից) document-ը երբեք չէր ջնջվում, երբ
-  // notebook-ից (ընդունողից) սեղմում էին "անջատել"։
+  // Երկկողմանի (և ինքնուրույն) զանգի փակում, Viber-ի տրամաբանությամբ.
+  // 1) Անմիջապես մաքրում ենք local UI/media state-ը (առանց սպասելու
+  //    ցանցին), որպեսզի սեղմող կողմի էկրանից զանգը անմիջապես անհետանա։
+  // 2) Երկու կողմերի active_calls document-ները ջնջում ենք
+  //    ՄԻԱԺԱՄԱՆԱԿ (Promise.all), ոչ թե հաջորդաբար, որպեսզի մեկի
+  //    ձախողումը (թույլտվության/ցանցի սխալ) չկասեցնի մյուսի ջնջումը։
+  // 3) Մյուս կողմի uid-ը վերցնում ենք activeCall.callerUid-ից, ոչ թե
+  //    activePartner-ից, քանի որ ընդունողի (incoming call) կողմից
+  //    activePartner-ը դատարկ է. incoming call-ը գալիս է active_calls
+  //    listener-ից, ոչ թե զրուցակցի ընտրությունից։
   async function hangUp() {
+    const myUid = user?.uid;
     const otherUid = activeCall?.callerUid || activePartner?.uid;
-    await endCallCleanup();
-    if (otherUid) {
-      try {
-        await deleteDoc(doc(db, "active_calls", otherUid));
-      } catch (err) {
-        console.error("Failed to clear partner active_calls doc:", err);
-      }
+
+    // Անմիջապես մաքրում ենք UI-ն ու media stream-երը սեղմող կողմում
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((track) => track.stop());
+      localStreamRef.current = null;
     }
+    if (localVideoRef.current) {
+      localVideoRef.current.srcObject = null;
+    }
+    setActiveCall(null);
+    activeCallRef.current = null;
+
+    // Երկու կողմերի document-ները ջնջում ենք զուգահեռ, error-ները
+    // առանձին բռնում ենք, որ մեկի failure-ը մյուսին չխանգարի
+    const deletions = [];
+    if (myUid) {
+      deletions.push(
+        deleteDoc(doc(db, "active_calls", myUid)).catch((err) =>
+          console.error("Failed to clear own active_calls doc:", err)
+        )
+      );
+    }
+    if (otherUid) {
+      deletions.push(
+        deleteDoc(doc(db, "active_calls", otherUid)).catch((err) =>
+          console.error("Failed to clear partner active_calls doc:", err)
+        )
+      );
+    }
+    await Promise.all(deletions);
   }
 
   // --- ԽՄԲԻ ՍՏԵՂԾՈՒՄ ---
