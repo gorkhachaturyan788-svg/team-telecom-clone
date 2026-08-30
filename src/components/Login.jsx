@@ -60,7 +60,7 @@ export default function AuthPage() {
         createdAt: new Date()
       }, { merge: true });
 
-      console.log("Հաջողությամբ մուտք գործեց և պահպանվեց բազայում:", loggedUser.email);
+      console.log("Հաջողությամբ մուտք գործեց:", loggedUser.email);
     } catch (err) {
       setError(err.message);
       console.error("Սխալ մուտքի ժամանակ:", err.message);
@@ -69,8 +69,7 @@ export default function AuthPage() {
     }
   };
 
-  const handleRegister = async (e) => {
-    e.preventDefault();
+  const handleRegister = async () => {
     if (!email || !password || loading) return;
 
     setLoading(true);
@@ -86,7 +85,7 @@ export default function AuthPage() {
         createdAt: new Date()
       }, { merge: true });
 
-      console.log("Գրանցվեց և պահպանվեց բազայում:", regUser.email);
+      console.log("Գրանցվեց:", regUser.email);
     } catch (err) {
       setError(err.message);
       console.error("Գրանցման սխալ:", err.message);
@@ -116,7 +115,6 @@ export default function AuthPage() {
     <div className="flex flex-col lg:flex-row min-h-screen font-sans bg-[#f4f6f9]">
       <div className="w-full lg:w-[40%] min-w-0 lg:min-w-[400px] flex flex-col justify-between items-center py-10 px-5 box-border relative">
 
-
         <div className="absolute top-5 left-5">
           <Link to="/">
             <img
@@ -131,16 +129,14 @@ export default function AuthPage() {
           <button
             type="button"
             onClick={() => setActiveTab("individuals")}
-            className={`bg-transparent border-none text-[16px] font-semibold cursor-pointer pb-2 transition-all ${activeTab === "individuals" ? "text-[#1a1a1a] border-b-[3px] border-[#00bcd4]" : "text-[#999] border-b-[3px] border-transparent"
-              }`}
+            className={`bg-transparent border-none text-[16px] font-semibold cursor-pointer pb-2 transition-all ${activeTab === "individuals" ? "text-[#1a1a1a] border-b-[3px] border-[#00bcd4]" : "text-[#999] border-b-[3px] border-transparent"}`}
           >
             Անհատներին
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("business")}
-            className={`bg-transparent border-none text-[16px] font-semibold cursor-pointer pb-2 transition-all ${activeTab === "business" ? "text-[#1a1a1a] border-b-[3px] border-[#00bcd4]" : "text-[#999] border-b-[3px] border-transparent"
-              }`}
+            className={`bg-transparent border-none text-[16px] font-semibold cursor-pointer pb-2 transition-all ${activeTab === "business" ? "text-[#1a1a1a] border-b-[3px] border-[#00bcd4]" : "text-[#999] border-b-[3px] border-transparent"}`}
           >
             Բիզնես
           </button>
@@ -156,6 +152,7 @@ export default function AuthPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Մուտքագրեք էլ. հասցեն"
+                  autoComplete="email"
                   className="border-none outline-none w-full text-[14px] text-[#333]"
                   required
                 />
@@ -170,6 +167,7 @@ export default function AuthPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Մուտքագրեք գաղտնաբառը"
+                  autoComplete="current-password"
                   className="border-none outline-none w-full text-[14px] text-[#333]"
                   required
                 />
