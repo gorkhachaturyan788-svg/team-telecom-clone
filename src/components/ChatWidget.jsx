@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   MessageCircle,
@@ -87,12 +87,39 @@ export default function DirectChatWidget({ user }) {
   const localVideoRef = useRef(null);
   const localStreamRef = useRef(null);
 
+  // Ref-ով ենք հետևում ընթացիկ activeCall-ին, որպեսզի listener-ի
+  // useEffect-ը ՉԼԻՆԻ activeCall-ից կախված (սա էր անընդհատ
+  // resubscribe-ի և Firestore 400 սխալների պատճառը)
+  const activeCallRef = useRef(null);
+  useEffect(() => {
+    activeCallRef.current = activeCall;
+  }, [activeCall]);
+
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const micStreamRef = useRef(null);
   const bodyRef = useRef(null);
 
   const isLoggedIn = !!user;
+
+  // Զանգի ավարտի cleanup — useCallback, որպեսզի stale closure չառաջանա
+  const endCallCleanup = useCallback(async () => {
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((track) => track.stop());
+      localStreamRef.current = null;
+    }
+    if (localVideoRef.current) {
+      localVideoRef.current.srcObject = null;
+    }
+    setActiveCall(null);
+    activeCallRef.current = null;
+
+    try {
+      if (user?.uid) await deleteDoc(doc(db, "active_calls", user.uid));
+    } catch (err) {
+      console.error("Failed to clear own active_calls doc:", err);
+    }
+  }, [user?.uid]);
 
   // Օգտատիրոջ գրանցում/թարմացում բազայում
   useEffect(() => {
@@ -117,7 +144,7 @@ export default function DirectChatWidget({ user }) {
   // Բոլոր օգտատերերի բեռնում
   useEffect(() => {
     if (!isLoggedIn || !user?.uid) return;
-    
+
     const unsubscribe = onSnapshot(
       collection(db, "users"),
       (snapshot) => {
@@ -152,28 +179,41 @@ export default function DirectChatWidget({ user }) {
   }, [isLoggedIn, user?.uid]);
 
   // Մուտքային զանգերի լսում
+  // ԿԱՐԵՎՈՐ ՈՒՂՂՈՒՄ. այս effect-ը այլևս կախված չէ `activeCall`-ից։
+  // Նախկինում `activeCall`-ը dependency array-ում լինելով, և քանի որ
+  // հենց այս effect-ի ներսում կանչվում էր setActiveCall, listener-ը
+  // անընդհատ unsubscribe/resubscribe էր անում՝ բացելով նոր WebChannel
+  // կապեր, ինչը հենց և առաջացնում էր Firestore Listen/channel 400
+  // սխալների անվերջ հոսքը։ Այժմ օգտագործում ենք activeCallRef՝
+  // ընթացիկ վիճակը ստուգելու համար, առանց effect-ը վերսկսելու։
   useEffect(() => {
     if (!isLoggedIn || !user?.uid) return;
+
     const callDocRef = doc(db, "active_calls", user.uid);
-    const unsubscribe = onSnapshot(callDocRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const callData = docSnap.data();
-        if (callData && callData.status === "ringing") {
-          setActiveCall({
-            callId: user.uid,
-            callerName: callData.callerName,
-            type: callData.type,
-            isIncoming: true,
-          });
+    const unsubscribe = onSnapshot(
+      callDocRef,
+      (docSnap) => {
+        if (docSnap.exists()) {
+          const callData = docSnap.data();
+          if (callData && callData.status === "ringing") {
+            setActiveCall({
+              callId: user.uid,
+              callerName: callData.callerName,
+              type: callData.type,
+              isIncoming: true,
+            });
+          }
+        } else {
+          if (activeCallRef.current?.isIncoming) {
+            endCallCleanup();
+          }
         }
-      } else {
-        if (activeCall?.isIncoming) {
-          endCallCleanup();
-        }
-      }
-    });
+      },
+      (err) => console.error("Active call listener error:", err)
+    );
+
     return () => unsubscribe();
-  }, [isLoggedIn, user?.uid, activeCall]);
+  }, [isLoggedIn, user?.uid, endCallCleanup]);
 
   // Հաղորդագրությունների լսում
   useEffect(() => {
@@ -268,21 +308,18 @@ export default function DirectChatWidget({ user }) {
     }
   }
 
-  async function endCallCleanup() {
-    if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach((track) => track.stop());
-      localStreamRef.current = null;
+  // Երկկողմանի (և ինքնուրույն) զանգի փակում՝ ջնջում ենք երկուսի
+  // active_calls փաստաթղթերն էլ, երբ օգտատերը ինքն է կտրում զանգը։
+  async function hangUp() {
+    const partnerUid = activePartner?.uid;
+    await endCallCleanup();
+    if (partnerUid) {
+      try {
+        await deleteDoc(doc(db, "active_calls", partnerUid));
+      } catch (err) {
+        console.error("Failed to clear partner active_calls doc:", err);
+      }
     }
-    if (localVideoRef.current) {
-      localVideoRef.current.srcObject = null;
-    }
-    setActiveCall(null);
-
-    try {
-      if (user?.uid) await deleteDoc(doc(db, "active_calls", user.uid));
-      if (activePartner?.uid)
-        await deleteDoc(doc(db, "active_calls", activePartner.uid));
-    } catch (err) {}
   }
 
   // --- ԽՄԲԻ ՍՏԵՂԾՈՒՄ ---
@@ -371,7 +408,9 @@ export default function DirectChatWidget({ user }) {
         },
         { merge: true }
       );
-    } catch (err) {}
+    } catch (err) {
+      console.error("Failed to ensure room doc:", err);
+    }
   }
 
   async function sendTextMessage() {
@@ -542,7 +581,7 @@ export default function DirectChatWidget({ user }) {
                   </button>
                 )}
                 <button
-                  onClick={endCallCleanup}
+                  onClick={hangUp}
                   className="w-14 h-14 rounded-full bg-red-500 flex items-center justify-center cursor-pointer border-0 shadow-lg"
                 >
                   <PhoneOff size={24} color="#fff" />
@@ -680,7 +719,7 @@ export default function DirectChatWidget({ user }) {
                             alt=""
                             className="w-7 h-7 rounded-full object-cover"
                             onError={(e) => {
-                              e.target.style.display = 'none';
+                              e.target.style.display = "none";
                             }}
                           />
                         ) : (
@@ -757,7 +796,7 @@ export default function DirectChatWidget({ user }) {
                       alt=""
                       className="w-8 h-8 rounded-full object-cover"
                       onError={(e) => {
-                        e.target.style.display = 'none';
+                        e.target.style.display = "none";
                       }}
                     />
                   ) : (
