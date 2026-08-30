@@ -10,13 +10,10 @@ export default function TVTelecom() {
           </h2>
         </div>
 
-        {/* Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           
-          {/* Left Block */}
           <div className="lg:col-span-5 space-y-8 lg:space-y-10">
             
-            {/* 1. Catch-Up */}
             <div className="flex items-start gap-5">
               <img 
                 src="https://www.telecomarmenia.am/file_manager/cosmo/icons/2_icon.png" 

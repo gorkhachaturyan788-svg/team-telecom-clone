@@ -28,7 +28,6 @@ export default function Spasarkum1() {
   return (
     <div className="w-full font-sans bg-[#f7f5f0] pb-10">
       
-      {/* Վերին գլխավոր հատվածը՝ նկարով և գունավոր ֆոնով */}
       <div className="relative w-full h-[320px] md:h-[380px] lg:h-[420px] overflow-hidden bg-[#7ac1d2]">
         <div 
           className="absolute inset-0 bg-cover bg-center"
@@ -40,7 +39,6 @@ export default function Spasarkum1() {
         </div>
       </div>
 
-      {/* Ստորին նավիգացիոն վահանակը (Tabs) */}
       <div className="max-w-7xl mx-auto px-6 sm:px-10 -mt-16 relative z-10">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
           {navItems.map((item, index) => (

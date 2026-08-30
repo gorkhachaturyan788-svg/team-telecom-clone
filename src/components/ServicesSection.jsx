@@ -1,18 +1,18 @@
 import { useEffect, useState, useRef } from "react";
-import { Link } from "react-router-dom"; // Ներմուծում ենք Link-ը
+import { Link } from "react-router-dom"; 
 
 const services = [
   {
     id: 1,
     title: "ԲՋՋԱՅԻՆ ԿԱՊ",
     img: "https://www.telecomarmenia.am/images/advanced_slider/2/17574203779594.jpeg",
-    to: "/tariffs/mobile", // Ավելացրեցինք հղման ուղին
+    to: "/tariffs/mobile", 
   },
   {
     id: 2,
     title: "ՖԻՔՍՎԱԾ ԿԱՊ",
     img: "https://www.telecomarmenia.am/images/team_apps/1/16510708696227.png",
-    to: "/tariffs/fixed", // Օրինակի համար կարող եք փոխել կամ ավելացնել մյուսների համար էլ
+    to: "/tariffs/fixed", 
   },
   {
     id: 3,
@@ -71,7 +71,6 @@ export default function ServicesSection() {
               <h3 className="text-2xl sm:text-3xl font-black text-blue-950">
                 {service.title}
               </h3>
-              {/* Փոխարինել ենք button-ը Link-ով և ավելացրել to ատրիբուտը */}
               <Link 
                 to={service.to} 
                 className="inline-block text-orange-600 text-base sm:text-lg font-bold hover:underline"
@@ -80,7 +79,6 @@ export default function ServicesSection() {
               </Link>
             </div>
 
-            {/* Նկարի մաս */}
             <div className="w-36 h-36 sm:w-52 sm:h-52 flex items-center justify-center shrink-0 mt-4 sm:mt-0">
               <img
                 src={service.img}

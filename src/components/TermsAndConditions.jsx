@@ -12,7 +12,6 @@ export default function TermsAndConditions() {
     <div className="bg-[#f7f8fa] min-h-screen font-['Segoe_UI',Arial,sans-serif] py-[30px]">
       <div className="max-w-[1240px] mx-auto px-[5%]">
         
-        {/* Հացի փշրանքներ */}
         <div className="text-gray-500 text-xs sm:text-sm mb-6 flex items-center gap-2">
           <span>Գլխավոր</span>
           <span>›</span>
@@ -27,7 +26,6 @@ export default function TermsAndConditions() {
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-[30px] items-start">
           
-          {/* Ձախ կողմի մենյու */}
           <div className="lg:col-span-1 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <button
               onClick={() => setActiveCategory("active")}
@@ -61,8 +59,6 @@ export default function TermsAndConditions() {
               )}
             </button>
           </div>
-
-          {/* Աջ կողմի բովանդակություն */}
           <div className="lg:col-span-3 space-y-4">
             
             {activeCategory === "active" ? (
@@ -91,8 +87,6 @@ export default function TermsAndConditions() {
                     </div>
                   )}
                 </div>
-
-                {/* Բաժին 2 */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                   <button
                     onClick={() => toggleSection("game1")}
@@ -117,7 +111,6 @@ export default function TermsAndConditions() {
                   )}
                 </div>
 
-                {/* Բաժին 3 */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                   <button
                     onClick={() => toggleSection("game2")}

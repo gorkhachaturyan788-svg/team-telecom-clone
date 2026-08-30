@@ -28,7 +28,6 @@ export default function Sarq1() {
   return (
     <div className="w-full font-sans bg-[#f7f5f0] pb-10">
       
-      {/* Վերին գլխավոր հատվածը՝ նկարով և գունավոր ֆոնով */}
       <div className="relative w-full h-[320px] md:h-[380px] lg:h-[420px] overflow-hidden bg-[#7ac1d2]">
         <div 
           className="absolute inset-0 bg-cover bg-center"

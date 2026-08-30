@@ -52,7 +52,6 @@ export default function Smart2() {
     <div className="w-full bg-[#f7f5f0] py-16 md:py-20 font-sans text-[#003853]">
       <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-12 space-y-16">
         
-        {/* Բաժին 1: Անսահմանափակ հավելվածներ */}
         <div className="space-y-6">
           <div className="flex items-center justify-between border-b border-gray-200 pb-4">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-[#003853] tracking-tight">
@@ -89,7 +88,6 @@ export default function Smart2() {
           </div>
         </div>
 
-        {/* Բաժին 2: Giga */}
         <div className="space-y-6">
           <div className="flex items-center justify-between border-b border-gray-200 pb-4">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-[#003853] tracking-tight">

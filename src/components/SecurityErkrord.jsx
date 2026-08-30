@@ -43,30 +43,26 @@ export default function SecurityErkrord() {
   return (
     <div className="w-full bg-[#f7f5f0] py-16 md:py-24 font-sans">
       <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-12 space-y-12">
-        
-        {/* Վերնագիր */}
+        =
         <h2 className="text-3xl md:text-5xl font-black text-[#003853] tracking-tight">
           ԶԱՆԳԵՐ ԵՒ ԱՆՎՏԱՆԳՈՒԹՅՈՒՆ
         </h2>
 
-        {/* Բաժինների ցանց (Grid) */}
+       
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           
-          {/* Առաջին մեծ բլոկը - Զբաղեցնում է 2 սյունակ */}
           <div className="md:col-span-2 relative rounded-3xl overflow-hidden shadow-sm border border-gray-100 flex flex-col justify-between p-8 md:p-12 min-h-[380px] group">
-            {/* Հետնաբեմի նկարը */}
+         
             <div 
               className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
               style={{ backgroundImage: `url('https://www.telecomarmenia.am/images/service/1/15553135300406.jpeg')` }}
             >
-              {/* Մուգ ֆիլտր տեքստի ընթեռնելիության համար */}
+             
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
             </div>
 
-            {/* Վերին հատված */}
             <div className="relative z-10"></div>
 
-            {/* Ստորին հատված՝ տեքստ և կոճակ */}
             <div className="relative z-10 space-y-4">
               <h3 className="text-3xl md:text-4xl font-black text-white">
                 Զանգի վերահասցեավորում
@@ -85,7 +81,6 @@ export default function SecurityErkrord() {
             </div>
           </div>
 
-          {/* Մյուս փոքր քարտերը */}
           {cards.map((card, index) => (
             <div 
               key={index} 
