@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   MessageCircle,
@@ -19,16 +19,17 @@ import {
 import {
   doc,
   setDoc,
+  getDoc,
   addDoc,
   deleteDoc,
   updateDoc,
   collection,
   onSnapshot,
   query,
+  where,
   orderBy,
   serverTimestamp,
   arrayRemove,
-  getDoc,
 } from "firebase/firestore";
 
 import { db } from "../firebase";
@@ -42,13 +43,6 @@ const COLORS = {
   border: "#e6e4f2",
   danger: "#ff5b6a",
   bubbleBot: "#f0eefc",
-};
-
-// WebRTC STUN սերվերներ կապի համար
-const servers = {
-  iceServers: [
-    { urls: ["stun:stun1.l.google.com:19302", "stun:stun2.l.google.com:19302"] },
-  ],
 };
 
 function getChatRoomId(uid1, uid2) {
@@ -90,15 +84,38 @@ export default function DirectChatWidget({ user }) {
   const [uploading, setUploading] = useState(false);
   const [sendError, setSendError] = useState("");
 
-  // Զանգերի վիճակներ և WebRTC ռեֆերներ
+  // Զանգերի վիճակներ
   const [activeCall, setActiveCall] = useState(null);
   const localVideoRef = useRef(null);
-  const remoteVideoRef = useRef(null);
-  const remoteAudioRef = useRef(null);
-  
   const localStreamRef = useRef(null);
+  const remoteAudioRef = useRef(null);
+  const remoteVideoRef = useRef(null);
+
+  // WebRTC peer connection և ICE candidate-ների ժամանակավոր հերթ
+  const pcRef = useRef(null);
+  const pendingCandidatesRef = useRef([]);
+  const remoteDescSetRef = useRef(false);
+
+  // ԿԱՐԵՎՈՐ. պահում ենք ամենավերջին remote stream-ը, որպեսզի եթե
+  // ontrack-ը կրակի ավելի վաղ, քան <audio>/<video> element-երը
+  // render են եղել DOM-ում (օրինակ activeCall.connected-ի փոփոխման
+  // ընթացքում, incoming call -> accept -> re-render race condition),
+  // մենք հնարավորություն ունենանք dedicated useEffect-ով նորից
+  // "ամրացնել" stream-ը element-ներին, հենց նրանք հասանելի դառնան։
   const remoteStreamRef = useRef(null);
-  const peerConnectionRef = useRef(null);
+
+  const ICE_SERVERS = [
+    { urls: "stun:stun.l.google.com:19302" },
+    { urls: "stun:stun1.l.google.com:19302" },
+  ];
+
+  // Ref-ով ենք հետևում ընթացիկ activeCall-ին, որպեսզի listener-ի
+  // useEffect-ը ՉԼԻՆԻ activeCall-ից կախված (սա էր անընդհատ
+  // resubscribe-ի և Firestore 400 սխալների պատճառը)
+  const activeCallRef = useRef(null);
+  useEffect(() => {
+    activeCallRef.current = activeCall;
+  }, [activeCall]);
 
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
@@ -106,6 +123,141 @@ export default function DirectChatWidget({ user }) {
   const bodyRef = useRef(null);
 
   const isLoggedIn = !!user;
+
+  // Օգնական ֆունկցիա, որը հեռավոր stream-ը (եթե արդեն ստացվել է)
+  // ամրացնում է <audio>/<video> element-երին և explicit .play()
+  // է կանչում։ Browser-ները (հատկապես Chrome/Safari) հաճախ ԼՌԵԼՅԱՅՆ
+  // ԱՐԳԵԼԱՓԱԿՈՒՄ ԵՆ autoplay-ը, եթե srcObject-ը դրվում է ասինխրոն
+  // (Firestore/WebRTC callback-ի ներսում), ուստի պարզապես srcObject
+  // սահմանելը հաճախ բավարար չէ. պետք է նաև explicit .play() կանչել։
+  const attachRemoteStream = useCallback(() => {
+    const stream = remoteStreamRef.current;
+    if (!stream) return;
+
+    if (remoteAudioRef.current && remoteAudioRef.current.srcObject !== stream) {
+      remoteAudioRef.current.srcObject = stream;
+      remoteAudioRef.current
+        .play()
+        .catch((err) => console.error("remoteAudio play() failed:", err));
+    }
+
+    if (
+      activeCallRef.current?.type === "video" &&
+      remoteVideoRef.current &&
+      remoteVideoRef.current.srcObject !== stream
+    ) {
+      remoteVideoRef.current.srcObject = stream;
+      remoteVideoRef.current
+        .play()
+        .catch((err) => console.error("remoteVideo play() failed:", err));
+    }
+  }, []);
+
+  // Երբ activeCall-ը փոփոխվում է (օր. incoming -> accepted, կամ
+  // connected դառնում է true), <audio>/<video> element-երը կարող են
+  // նոր հասանելի լինել DOM-ում։ Այս effect-ը վերաամրացնում է արդեն
+  // ստացված remote stream-ը այդ նոր element-ներին։
+  useEffect(() => {
+    attachRemoteStream();
+  }, [activeCall?.connected, activeCall?.type, activeCall?.isIncoming, attachRemoteStream]);
+
+  // Զանգի ավարտի cleanup — useCallback, որպեսզի stale closure չառաջանա
+  const endCallCleanup = useCallback(async () => {
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((track) => track.stop());
+      localStreamRef.current = null;
+    }
+    if (localVideoRef.current) {
+      localVideoRef.current.srcObject = null;
+    }
+    if (remoteAudioRef.current) {
+      remoteAudioRef.current.srcObject = null;
+    }
+    if (remoteVideoRef.current) {
+      remoteVideoRef.current.srcObject = null;
+    }
+    if (pcRef.current) {
+      pcRef.current.close();
+      pcRef.current = null;
+    }
+    pendingCandidatesRef.current = [];
+    remoteDescSetRef.current = false;
+    remoteStreamRef.current = null;
+    setActiveCall(null);
+    activeCallRef.current = null;
+
+    try {
+      if (user?.uid) await deleteDoc(doc(db, "active_calls", user.uid));
+    } catch (err) {
+      console.error("Failed to clear own active_calls doc:", err);
+    }
+  }, [user?.uid]);
+
+  // --- WEBRTC ՕԳՆԱԿԱՆ ՖՈՒՆԿՑԻԱՆԵՐ ---
+  // callDocPath-ը միշտ zանգողի uid-ով document-ն է (active_calls/{calleeUid}),
+  // քանի որ startCall-ը հենց այնտեղ է գրում ringing/offer/answer info-ն։
+  function getSignalRoomId() {
+    // Signaling info-ն պահում ենք ինքը՝ active_calls collection-ի
+    // callee-ի document-ում, որպեսզի երկու կողմն էլ արդեն գիտեն այս
+    // path-ը (նույն document-ը, որով ուղարկվում է ringing/accepted)։
+    return activeCall?.callId;
+  }
+
+  function createPeerConnection(roomId, isCaller) {
+    const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        const subcol = isCaller ? "callerCandidates" : "calleeCandidates";
+        addDoc(
+          collection(db, "active_calls", roomId, subcol),
+          event.candidate.toJSON()
+        ).catch((err) => console.error("Failed to send ICE candidate:", err));
+      }
+    };
+
+    // ԿԱՐԵՎՈՐ ՈՒՂՂՈՒՄ. նախկինում ձայնը երբեմն չէր լսվում, քանի որ.
+    //   1) video զանգի ժամանակ <audio> element-ը ընդհանրապես render
+    //      չէր լինում DOM-ում (պայմանական rendering-ի պատճառով), և
+    //      remoteAudioRef.current-ը null էր՝ ուստի ոչինչ չէր ամրացվում,
+    //   2) նույնիսկ երբ srcObject-ը դրվում էր, browser-ը (հատկապես
+    //      Chrome/Safari) լռելյայն արգելափակում է media-ի autoplay-ը,
+    //      երբ դա տեղի է ունենում ասինխրոն event handler-ի ներսում,
+    //      եթե չկա explicit .play() կանչ։
+    // Այժմ pc.ontrack-ը պահում է stream-ը ref-ում և կանչում է
+    // attachRemoteStream()-ը, որը և՛ միշտ ամրացնում է audio element-ին
+    // (անկախ զանգի տեսակից), և՛ explicit .play() է անում։
+    pc.ontrack = (event) => {
+      const [remoteStream] = event.streams;
+      remoteStreamRef.current = remoteStream;
+      attachRemoteStream();
+    };
+
+    pc.onconnectionstatechange = () => {
+      if (
+        pc.connectionState === "failed" ||
+        pc.connectionState === "disconnected" ||
+        pc.connectionState === "closed"
+      ) {
+        console.warn("Peer connection state:", pc.connectionState);
+      }
+    };
+
+    return pc;
+  }
+
+  async function flushPendingCandidates() {
+    if (!pcRef.current) return;
+    const queued = pendingCandidatesRef.current;
+    pendingCandidatesRef.current = [];
+    for (const candidate of queued) {
+      try {
+        await pcRef.current.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch (err) {
+        console.error("Failed to add queued ICE candidate:", err);
+      }
+    }
+  }
 
   // Օգտատիրոջ գրանցում/թարմացում բազայում
   useEffect(() => {
@@ -130,7 +282,7 @@ export default function DirectChatWidget({ user }) {
   // Բոլոր օգտատերերի բեռնում
   useEffect(() => {
     if (!isLoggedIn || !user?.uid) return;
-    
+
     const unsubscribe = onSnapshot(
       collection(db, "users"),
       (snapshot) => {
@@ -151,12 +303,17 @@ export default function DirectChatWidget({ user }) {
   // Խմբերի բեռնում
   useEffect(() => {
     if (!isLoggedIn || !user?.uid) return;
-    const unsubscribe = onSnapshot(
+    const groupsQuery = query(
       collection(db, "group_chats"),
+      where("participants", "array-contains", user.uid)
+    );
+    const unsubscribe = onSnapshot(
+      groupsQuery,
       (snapshot) => {
-        const groupsList = snapshot.docs
-          .map((d) => ({ id: d.id, ...d.data() }))
-          .filter((g) => g.participants?.includes(user.uid));
+        const groupsList = snapshot.docs.map((d) => ({
+          id: d.id,
+          ...d.data(),
+        }));
         setGroups(groupsList);
       },
       (err) => console.error("Groups listener error:", err)
@@ -164,56 +321,132 @@ export default function DirectChatWidget({ user }) {
     return () => unsubscribe();
   }, [isLoggedIn, user?.uid]);
 
-  // Մուտքային զանգերի լսում և WebRTC տրամաբանություն
+  // Մուտքային զանգերի լսում
   useEffect(() => {
     if (!isLoggedIn || !user?.uid) return;
+
     const callDocRef = doc(db, "active_calls", user.uid);
-    const unsubscribe = onSnapshot(callDocRef, async (docSnap) => {
-      if (docSnap.exists()) {
-        const callData = docSnap.data();
-        if (callData && callData.status === "ringing" && !activeCall) {
-          setActiveCall({
-            callId: user.uid,
-            callerUid: callData.callerUid,
-            callerName: callData.callerName,
-            type: callData.type,
-            isIncoming: true,
-            offer: callData.offer,
-          });
-        }
-      } else {
-        if (activeCall?.isIncoming && !activeCall?.connected) {
-          endCallCleanup();
-        }
-      }
-    });
-    return () => unsubscribe();
-  }, [isLoggedIn, user?.uid, activeCall]);
-
-  // Մուտքային ICE candidate-ների ստացում Firebase-ից
-  useEffect(() => {
-    if (!isLoggedIn || !user?.uid || !activeCall) return;
-
-    const candidatesCol = collection(db, "active_calls", user.uid, "candidates");
-    const unsubscribe = onSnapshot(candidatesCol, (snapshot) => {
-      snapshot.docChanges().forEach(async (change) => {
-        if (change.type === "added") {
-          const data = change.doc.data();
-          if (peerConnectionRef.current && data.candidate) {
-            try {
-              await peerConnectionRef.current.addIceCandidate(
-                new RTCIceCandidate(data.candidate)
-              );
-            } catch (err) {
-              console.error("Error adding received ice candidate", err);
-            }
+    const unsubscribe = onSnapshot(
+      callDocRef,
+      (docSnap) => {
+        if (docSnap.exists()) {
+          const callData = docSnap.data();
+          if (callData && callData.status === "ringing") {
+            setActiveCall({
+              callId: user.uid,
+              callerName: callData.callerName,
+              callerUid: callData.callerUid,
+              type: callData.type,
+              isIncoming: true,
+            });
+          }
+        } else {
+          if (activeCallRef.current?.isIncoming) {
+            endCallCleanup();
           }
         }
-      });
-    });
+      },
+      (err) => console.error("Active call listener error:", err)
+    );
 
     return () => unsubscribe();
-  }, [isLoggedIn, user?.uid, activeCall]);
+  }, [isLoggedIn, user?.uid, endCallCleanup]);
+
+  // Ելքային զանգի կարգավիճակի լսում (զանգողի կողմից)
+  useEffect(() => {
+    if (!isLoggedIn || !activeCall || activeCall.isIncoming) return;
+
+    const partnerCallDocRef = doc(db, "active_calls", activeCall.callId);
+    const unsubscribe = onSnapshot(
+      partnerCallDocRef,
+      async (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data?.status === "accepted") {
+            setActiveCall((prev) =>
+              prev && !prev.isIncoming ? { ...prev, connected: true } : prev
+            );
+          }
+          if (data?.answer && pcRef.current && !remoteDescSetRef.current) {
+            try {
+              await pcRef.current.setRemoteDescription(
+                new RTCSessionDescription(data.answer)
+              );
+              remoteDescSetRef.current = true;
+              await flushPendingCandidates();
+            } catch (err) {
+              console.error("Failed to set remote description (answer):", err);
+            }
+          }
+        } else {
+          endCallCleanup();
+        }
+      },
+      (err) => console.error("Outgoing call status listener error:", err)
+    );
+
+    return () => unsubscribe();
+  }, [isLoggedIn, activeCall?.callId, activeCall?.isIncoming, endCallCleanup]);
+
+  // Callee-ի candidate-ների լսում (զանգողի կողմից)
+  useEffect(() => {
+    if (!isLoggedIn || !activeCall || activeCall.isIncoming) return;
+    const roomId = activeCall.callId;
+    const unsubscribe = onSnapshot(
+      collection(db, "active_calls", roomId, "calleeCandidates"),
+      (snapshot) => {
+        snapshot.docChanges().forEach((change) => {
+          if (change.type === "added") {
+            const candidate = change.doc.data();
+            if (pcRef.current && remoteDescSetRef.current) {
+              pcRef.current
+                .addIceCandidate(new RTCIceCandidate(candidate))
+                .catch((err) =>
+                  console.error("Failed to add callee ICE candidate:", err)
+                );
+            } else {
+              pendingCandidatesRef.current.push(candidate);
+            }
+          }
+        });
+      },
+      (err) => console.error("Callee candidates listener error:", err)
+    );
+    return () => unsubscribe();
+  }, [isLoggedIn, activeCall?.callId, activeCall?.isIncoming]);
+
+  // Caller-ի candidate-ների լսում (callee-ի կողմից)
+  useEffect(() => {
+    if (!isLoggedIn || !activeCall || !activeCall.isIncoming || !activeCall.connected)
+      return;
+    const roomId = activeCall.callId;
+    const unsubscribe = onSnapshot(
+      collection(db, "active_calls", roomId, "callerCandidates"),
+      (snapshot) => {
+        snapshot.docChanges().forEach((change) => {
+          if (change.type === "added") {
+            const candidate = change.doc.data();
+            if (pcRef.current && remoteDescSetRef.current) {
+              pcRef.current
+                .addIceCandidate(new RTCIceCandidate(candidate))
+                .catch((err) =>
+                  console.error("Failed to add caller ICE candidate:", err)
+                );
+            } else {
+              pendingCandidatesRef.current.push(candidate);
+            }
+          }
+        });
+      },
+      (err) => console.error("Caller candidates listener error:", err)
+    );
+    return () => unsubscribe();
+  }, [
+    isLoggedIn,
+    activeCall?.callId,
+    activeCall?.isIncoming,
+    activeCall?.connected,
+  ]);
 
   // Հաղորդագրությունների լսում
   useEffect(() => {
@@ -254,59 +487,39 @@ export default function DirectChatWidget({ user }) {
     }
   }, [messages, open]);
 
-  // --- WebRTC ԶԱՆԳԻ ՍԿՍՈՒՄ (Caller) ---
+  // --- ԶԱՆԳԻ ՍԿՍՈՒՄ (WebRTC offer ուղարկելով) ---
   async function startCall(type) {
     if (!activePartner || activePartner.isGroup) return;
 
     const partnerName = activePartner.name || "Զրուցակից";
+    const roomId = activePartner.uid;
     setActiveCall({
-      callId: activePartner.uid,
-      callerUid: user.uid,
+      callId: roomId,
       callerName: partnerName,
+      callerUid: activePartner.uid,
       type,
       isIncoming: false,
-      connected: false,
     });
 
     try {
-      const pc = new RTCPeerConnection(servers);
-      peerConnectionRef.current = pc;
-
-      const remoteStream = new MediaStream();
-      remoteStreamRef.current = remoteStream;
-      if (remoteVideoRef.current) remoteVideoRef.current.srcObject = remoteStream;
-      if (remoteAudioRef.current) remoteAudioRef.current.srcObject = remoteStream;
-
-      pc.ontrack = (event) => {
-        event.streams[0].getTracks().forEach((track) => {
-          remoteStream.addTrack(track);
-        });
-      };
-
       const constraints = { audio: true, video: type === "video" };
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       localStreamRef.current = stream;
-
       if (type === "video" && localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
       }
 
+      const pc = createPeerConnection(roomId, true);
+      pcRef.current = pc;
       stream.getTracks().forEach((track) => pc.addTrack(track, stream));
-
-      pc.onicecandidate = async (event) => {
-        if (event.candidate) {
-          await addDoc(collection(db, "active_calls", activePartner.uid, "candidates"), {
-            candidate: event.candidate.toJSON(),
-          });
-        }
-      };
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
-      await setDoc(doc(db, "active_calls", activePartner.uid), {
+      await setDoc(doc(db, "active_calls", roomId), {
         callerUid: user.uid,
-        callerName: user.displayName || user.email?.split("@")[0] || "Օգտատեր",
+        callerName:
+          user.displayName || user.email?.split("@")[0] || "Օգտատեր",
         type,
         status: "ringing",
         offer: { type: offer.type, sdp: offer.sdp },
@@ -314,118 +527,98 @@ export default function DirectChatWidget({ user }) {
       });
     } catch (err) {
       console.error("Call start error:", err);
-      alert("Չհաջողվեց սկսել զանգը։  Ստուգեք միկրոֆոնի/տեսախցիկի թույլտվությունները։");
+      alert("Չհաջողվեց միացնել տեսախցիկը կամ միկրոֆոնը։");
       endCallCleanup();
     }
   }
 
-  // --- ԶԱՆԳԻ ԸՆԴՈՒՆՈՒՄ (Callee) ---
+  // --- ԶԱՆԳԻ ԸՆԴՈՒՆՈՒՄ (WebRTC answer ուղարկելով) ---
   async function acceptCall() {
+    const roomId = activeCall.callId; // սեփական uid-ը (callee)
     try {
-      const pc = new RTCPeerConnection(servers);
-      peerConnectionRef.current = pc;
-
-      const remoteStream = new MediaStream();
-      remoteStreamRef.current = remoteStream;
-      if (remoteVideoRef.current) remoteVideoRef.current.srcObject = remoteStream;
-      if (remoteAudioRef.current) remoteAudioRef.current.srcObject = remoteStream;
-
-      pc.ontrack = (event) => {
-        event.streams[0].getTracks().forEach((track) => {
-          remoteStream.addTrack(track);
-        });
-      };
-
       const constraints = { audio: true, video: activeCall.type === "video" };
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       localStreamRef.current = stream;
-
       if (activeCall.type === "video" && localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
       }
 
+      const callDocSnap = await getDoc(doc(db, "active_calls", roomId));
+      const callData = callDocSnap.data();
+      if (!callData?.offer) throw new Error("Offer not found");
+
+      const pc = createPeerConnection(roomId, false);
+      pcRef.current = pc;
       stream.getTracks().forEach((track) => pc.addTrack(track, stream));
 
-      pc.onicecandidate = async (event) => {
-        if (event.candidate) {
-          await addDoc(collection(db, "active_calls", activeCall.callerUid, "candidates"), {
-            candidate: event.candidate.toJSON(),
-          });
-        }
-      };
-
-      const offerDesc = new RTCSessionDescription(activeCall.offer);
-      await pc.setRemoteDescription(offerDesc);
+      await pc.setRemoteDescription(new RTCSessionDescription(callData.offer));
+      remoteDescSetRef.current = true;
 
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
-
-      await updateDoc(doc(db, "active_calls", user.uid), {
-        status: "connected",
-        answer: { type: answer.type, sdp: answer.sdp },
-      });
-
-      // Նաև ուղարկենք answer-ը զանգահարողին
-      await setDoc(doc(db, "active_calls", activeCall.callerUid), {
-        status: "connected",
-        answer: { type: answer.type, sdp: answer.sdp },
-      }, { merge: true });
 
       setActiveCall((prev) => ({
         ...prev,
         isIncoming: false,
         connected: true,
       }));
+
+      await updateDoc(doc(db, "active_calls", roomId), {
+        status: "accepted",
+        answer: { type: answer.type, sdp: answer.sdp },
+      });
+
+      await flushPendingCandidates();
     } catch (err) {
       console.error("Accept call error:", err);
       endCallCleanup();
     }
   }
 
-  // Եթե զանգահարողն է, սպասենք պատասխանի (answer)
-  useEffect(() => {
-    if (!activeCall || activeCall.isIncoming || activeCall.connected) return;
+  async function hangUp() {
+    const myUid = user?.uid;
+    const otherUid = activeCall?.callerUid || activePartner?.uid;
+    const roomId = activeCall?.callId;
 
-    const callDocRef = doc(db, "active_calls", user.uid);
-    const unsubscribe = onSnapshot(callDocRef, async (docSnap) => {
-      const data = docSnap.data();
-      if (data && data.answer && peerConnectionRef.current && !peerConnectionRef.current.remoteDescription) {
-        try {
-          const answerDesc = new RTCSessionDescription(data.answer);
-          await peerConnectionRef.current.setRemoteDescription(answerDesc);
-          setActiveCall((prev) => ({ ...prev, connected: true }));
-        } catch (err) {
-          console.error("Error setting remote description:", err);
-        }
-      }
-    });
-
-    return () => unsubscribe();
-  }, [activeCall, user?.uid]);
-
-  async function endCallCleanup() {
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach((track) => track.stop());
       localStreamRef.current = null;
     }
-    if (remoteStreamRef.current) {
-      remoteStreamRef.current.getTracks().forEach((track) => track.stop());
-      remoteStreamRef.current = null;
+    if (localVideoRef.current) {
+      localVideoRef.current.srcObject = null;
     }
-    if (peerConnectionRef.current) {
-      peerConnectionRef.current.close();
-      peerConnectionRef.current = null;
+    if (remoteAudioRef.current) {
+      remoteAudioRef.current.srcObject = null;
     }
-    if (localVideoRef.current) localVideoRef.current.srcObject = null;
-    if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
-    if (remoteAudioRef.current) remoteAudioRef.current.srcObject = null;
-
+    if (remoteVideoRef.current) {
+      remoteVideoRef.current.srcObject = null;
+    }
+    if (pcRef.current) {
+      pcRef.current.close();
+      pcRef.current = null;
+    }
+    pendingCandidatesRef.current = [];
+    remoteDescSetRef.current = false;
+    remoteStreamRef.current = null;
     setActiveCall(null);
+    activeCallRef.current = null;
 
-    try {
-      if (user?.uid) await deleteDoc(doc(db, "active_calls", user.uid));
-      if (activePartner?.uid) await deleteDoc(doc(db, "active_calls", activePartner.uid));
-    } catch (err) {}
+    const deletions = [];
+    if (myUid) {
+      deletions.push(
+        deleteDoc(doc(db, "active_calls", myUid)).catch((err) =>
+          console.error("Failed to clear own active_calls doc:", err)
+        )
+      );
+    }
+    if (otherUid) {
+      deletions.push(
+        deleteDoc(doc(db, "active_calls", otherUid)).catch((err) =>
+          console.error("Failed to clear partner active_calls doc:", err)
+        )
+      );
+    }
+    await Promise.all(deletions);
   }
 
   // --- ԽՄԲԻ ՍՏԵՂԾՈՒՄ ---
@@ -514,7 +707,9 @@ export default function DirectChatWidget({ user }) {
         },
         { merge: true }
       );
-    } catch (err) {}
+    } catch (err) {
+      console.error("Failed to ensure room doc:", err);
+    }
   }
 
   async function sendTextMessage() {
@@ -620,9 +815,6 @@ export default function DirectChatWidget({ user }) {
 
   return (
     <div style={{ fontFamily: "Segoe UI, Arial, sans-serif" }}>
-      {/* Թաքնված աուդիո թրեք՝ աուդիո զանգերի ձայնը լսելու համար */}
-      <audio ref={remoteAudioRef} autoPlay playsInline />
-
       <button
         onClick={() => setOpen((o) => !o)}
         aria-label="Բացել չաթը"
@@ -667,22 +859,40 @@ export default function DirectChatWidget({ user }) {
               </div>
 
               {activeCall.type === "video" && (
-                <div className="w-full h-48 bg-black rounded-xl overflow-hidden relative border border-gray-700 flex gap-2">
+                <div className="w-full h-48 bg-black rounded-xl overflow-hidden relative border border-gray-700">
                   <video
                     ref={remoteVideoRef}
                     autoPlay
                     playsInline
-                    className="w-1/2 h-full object-cover"
+                    className="w-full h-full object-cover"
                   />
                   <video
                     ref={localVideoRef}
                     autoPlay
                     playsInline
                     muted
-                    className="w-1/2 h-full object-cover"
+                    className="absolute bottom-2 right-2 w-16 h-20 object-cover rounded-lg border border-gray-500"
                   />
                 </div>
               )}
+
+              {/*
+                ԿԱՐԵՎՈՐ ՈՒՂՂՈՒՄ. այս <audio> element-ը այժմ ՄԻՇՏ render է
+                լինում՝ անկախ զանգի տեսակից (video/audio)։ Նախկինում այն
+                render էր միայն "audio" տեսակի զանգերի ժամանակ, ինչի
+                պատճառով video զանգերում remoteAudioRef.current-ը null
+                էր, և pc.ontrack-ը ոչինչ չէր կարողանում ամրացնել այնտեղ։
+                Video element-ի ինքնուրույն autoplay-ն էլ browser-ների
+                կողմից հաճախ արգելափակվում է, ուստի այս hidden <audio>
+                element-ը ծառայում է որպես հուսալի fallback՝ ձայնի
+                նվագարկման համար բոլոր դեպքերում։
+              */}
+              <audio
+                ref={remoteAudioRef}
+                autoPlay
+                playsInline
+                style={{ display: "none" }}
+              />
 
               <div className="flex items-center gap-6 mb-4">
                 {activeCall.isIncoming && !activeCall.connected && (
@@ -694,7 +904,7 @@ export default function DirectChatWidget({ user }) {
                   </button>
                 )}
                 <button
-                  onClick={endCallCleanup}
+                  onClick={hangUp}
                   className="w-14 h-14 rounded-full bg-red-500 flex items-center justify-center cursor-pointer border-0 shadow-lg"
                 >
                   <PhoneOff size={24} color="#fff" />
@@ -832,7 +1042,7 @@ export default function DirectChatWidget({ user }) {
                             alt=""
                             className="w-7 h-7 rounded-full object-cover"
                             onError={(e) => {
-                              e.target.style.display = 'none';
+                              e.target.style.display = "none";
                             }}
                           />
                         ) : (
@@ -909,7 +1119,7 @@ export default function DirectChatWidget({ user }) {
                       alt=""
                       className="w-8 h-8 rounded-full object-cover"
                       onError={(e) => {
-                        e.target.style.display = 'none';
+                        e.target.style.display = "none";
                       }}
                     />
                   ) : (
