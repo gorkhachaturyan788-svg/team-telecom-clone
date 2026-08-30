@@ -25,6 +25,7 @@ import {
   collection,
   onSnapshot,
   query,
+  where,
   orderBy,
   serverTimestamp,
   arrayRemove,
@@ -163,14 +164,24 @@ export default function DirectChatWidget({ user }) {
   }, [isLoggedIn, user?.uid, user?.email]);
 
   // Խմբերի բեռնում
+  // ԿԱՐԵՎՈՐ. query-ն այժմ ունի where("participants", "array-contains", uid),
+  // որպեսզի Firestore-ը ինքը server-side սահմանափակի արդյունքները։
+  // Առանց դրա, rules-ի պայմանը (uid in resource.data.participants) չի
+  // կարող ստուգվել ամբողջ collection-ի list query-ի համար, և Firestore-ը
+  // մերժում է ամբողջ հարցումը "Missing or insufficient permissions" սխալով։
   useEffect(() => {
     if (!isLoggedIn || !user?.uid) return;
-    const unsubscribe = onSnapshot(
+    const groupsQuery = query(
       collection(db, "group_chats"),
+      where("participants", "array-contains", user.uid)
+    );
+    const unsubscribe = onSnapshot(
+      groupsQuery,
       (snapshot) => {
-        const groupsList = snapshot.docs
-          .map((d) => ({ id: d.id, ...d.data() }))
-          .filter((g) => g.participants?.includes(user.uid));
+        const groupsList = snapshot.docs.map((d) => ({
+          id: d.id,
+          ...d.data(),
+        }));
         setGroups(groupsList);
       },
       (err) => console.error("Groups listener error:", err)
