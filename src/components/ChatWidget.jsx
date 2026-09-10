@@ -64,6 +64,69 @@ async function uploadToCloudinary(audioBlob) {
   return data.secure_url;
 }
 
+// --- Ringtone/dial-tone գեներատոր Web Audio API-ով ---
+// Չենք օգտագործում արտաքին mp3 ֆայլ, որպեսզի կախված չլինենք ցանցից
+// կամ hosting-ից. փոխարենը ուղղակի Web Audio API-ով գեներացնում ենք
+// պարզ, կրկնվող tone, որը մոտ է սովորական հեռախոսազանգի ձայնին։
+function createToneEngine() {
+  let audioCtx = null;
+  let intervalId = null;
+
+  function ensureCtx() {
+    if (!audioCtx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new AC();
+    }
+    if (audioCtx.state === "suspended") {
+      audioCtx.resume().catch(() => {});
+    }
+    return audioCtx;
+  }
+
+  function playBeepPair(freq1, freq2, duration) {
+    const ctx = ensureCtx();
+    const now = ctx.currentTime;
+
+    [freq1, freq2].forEach((freq) => {
+      if (!freq) return;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.15, now + 0.02);
+      gain.gain.linearRampToValueAtTime(0, now + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + duration + 0.05);
+    });
+  }
+
+  return {
+    // incoming call ringtone — ավանդական երկտոն "ring-ring" զույգ
+    startRingtone() {
+      if (intervalId) return;
+      const ring = () => playBeepPair(950, 1400, 0.4);
+      ring();
+      intervalId = setInterval(ring, 1200);
+    },
+    // outgoing call dial/ringback tone — ավելի մեղմ, երկար tone
+    startDialTone() {
+      if (intervalId) return;
+      const tone = () => playBeepPair(440, 480, 1.0);
+      tone();
+      intervalId = setInterval(tone, 2000);
+    },
+    stop() {
+      if (intervalId) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+    },
+  };
+}
+
 export default function DirectChatWidget({ user }) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -98,17 +161,30 @@ export default function DirectChatWidget({ user }) {
 
   // ԿԱՐԵՎՈՐ. պահում ենք ամենավերջին remote stream-ը, որպեսզի եթե
   // ontrack-ը կրակի ավելի վաղ, քան <audio>/<video> element-երը
-  // render են եղել DOM-ում (օրինակ activeCall.connected-ի փոփոխման
-  // ընթացքում, incoming call -> accept -> re-render race condition),
-  // մենք հնարավորություն ունենանք dedicated useEffect-ով նորից
-  // "ամրացնել" stream-ը element-ներին, հենց նրանք հասանելի դառնան։
+  // render են եղել DOM-ում, մենք հնարավորություն ունենանք dedicated
+  // useEffect-ով նորից "ամրացնել" stream-ը element-ներին, հենց նրանք
+  // հասանելի դառնան։
   const remoteStreamRef = useRef(null);
 
-  // Կանխում ենք startCall-ի կրկնակի/համընկնող կանչերը (օր. արագ
-  // կրկնակի սեղմումով), որոնք կստեղծեին ԵՐԿՐՈՐԴ getUserMedia
-  // stream մինչ առաջինը դեռ ընթացքի մեջ է, և առաջինի track-երը
-  // երբեք չէին stop() արվի (camera-ի light-ը մնում է վառ)
+  // Կանխում ենք startCall/acceptCall-ի կրկնակի/համընկնող կանչերը
+  // (օր. արագ կրկնակի սեղմումով, կամ React StrictMode-ի կրկնակի
+  // effect-ից), որոնք կստեղծեին ԵՐԿՐՈՐԴ RTCPeerConnection/getUserMedia
+  // stream, մինչ առաջինը դեռ ընթացքի մեջ է. հենց սա էր հիմնական
+  // պատճառը, թե ինչու զանգի ժամանակ ձայնն ու video-ն աշխատում էին
+  // ասիմետրիկ (մի կողմից լսվում/երևում էր, մյուս կողմից՝ ոչ) — երկրորդ
+  // peer connection-ը փոխարինում էր առաջինին, մինչ ontrack listener-ը
+  // մնում էր հին, այլևս չօգտագործվող pc-ի վրա, կամ track-երը
+  // ավելացվում էին pc-ին սխալ հերթականությամբ/ասինխրոն, ինչի
+  // արդյունքում m-line-երը mismatch էին լինում caller/callee միջև։
   const startingCallRef = useRef(false);
+  const acceptingCallRef = useRef(false);
+
+  // Ringtone/dial-tone engine — մեկ instance ամբողջ component-ի կյանքի
+  // ընթացքում
+  const toneEngineRef = useRef(null);
+  if (!toneEngineRef.current) {
+    toneEngineRef.current = createToneEngine();
+  }
 
   const ICE_SERVERS = [
     { urls: "stun:stun.l.google.com:19302" },
@@ -130,12 +206,46 @@ export default function DirectChatWidget({ user }) {
 
   const isLoggedIn = !!user;
 
+  // --- ՁԱՅՆԻ ԿԱՌԱՎԱՐՈՒՄ (ringtone / dial tone) ---
+  // Incoming call, որը դեռ ընդունված չէ → ringtone (կրկնվող "ring-ring")
+  // Outgoing call, որը դեռ ոչ connected → dial/ringback tone
+  // Երբ connected դառնում է, կամ զանգն ավարտվում է → stop
+  useEffect(() => {
+    const engine = toneEngineRef.current;
+
+    if (activeCall?.isIncoming && !activeCall?.connected) {
+      engine.startRingtone();
+    } else if (
+      activeCall &&
+      !activeCall.isIncoming &&
+      !activeCall.connected
+    ) {
+      engine.startDialTone();
+    } else {
+      engine.stop();
+    }
+
+    return () => {
+      // Չենք stop անում cleanup-ում ամեն render-ի դեպքում, որովհետև
+      // engine.stop() ինքն իր մեջ idempotent է. պարզապես նորից
+      // կանչվում է վերևի պայմաններից՝ հաջորդ render-ին
+    };
+  }, [activeCall?.isIncoming, activeCall?.connected, activeCall?.callId]);
+
+  // Անվերապահ երաշխիք. component-ի unmount-ի ժամանակ էլ դադարեցնել
+  // ցանկացած հնչող tone
+  useEffect(() => {
+    return () => {
+      toneEngineRef.current?.stop();
+    };
+  }, []);
+
   // Օգնական ֆունկցիա, որը հեռավոր stream-ը (եթե արդեն ստացվել է)
   // ամրացնում է <audio>/<video> element-երին և explicit .play()
-  // է կանչում։ Browser-ները (հատկապես Chrome/Safari) հաճախ ԼՌԵԼՅԱՅՆ
-  // ԱՐԳԵԼԱՓԱԿՈՒՄ ԵՆ autoplay-ը, եթե srcObject-ը դրվում է ասինխրոն
-  // (Firestore/WebRTC callback-ի ներսում), ուստի պարզապես srcObject
-  // սահմանելը հաճախ բավարար չէ. պետք է նաև explicit .play() կանչել։
+  // է կանչում։ Browser-ները հաճախ ԼՌԵԼՅԱՅՆ ԱՐԳԵԼԱՓԱԿՈՒՄ ԵՆ
+  // autoplay-ը, եթե srcObject-ը դրվում է ասինխրոն, ուստի պարզապես
+  // srcObject սահմանելը հաճախ բավարար չէ. պետք է նաև explicit
+  // .play() կանչել։
   const attachRemoteStream = useCallback(() => {
     const stream = remoteStreamRef.current;
     if (!stream) return;
@@ -153,16 +263,10 @@ export default function DirectChatWidget({ user }) {
       remoteVideoRef.current.srcObject !== stream
     ) {
       // ԿԱՐԵՎՈՐ. remote video-ն դիտավորյալ muted ենք պահում։ Ձայնը
-      // արդեն ամբողջությամբ նվագարկվում է առանձին <audio> element-ից
-      // (տես ներքևում), ուստի video element-ի audio track-ը պետք չէ։
-      // Սա երկու նպատակ ունի.
-      //   1) Կանխում է կրկնակի ձայնը (նույն audio track-ը երկու
-      //      տարբեր element-ից նվագարկվելը)։
-      //   2) Բազմաթիվ browser-ներ (հատկապես iOS Safari) արգելափակում
-      //      են unmuted <video>-ի autoplay-ը առանց ուղիղ user gesture-ի,
-      //      ինչի պատճառով remote video-ն կախված/սև էր մնում, նույնիսկ
-      //      երբ track-ը իրականում ստացվում էր։ muted video-ի autoplay-ը
-      //      արգելափակված չէ։
+      // արդեն ամբողջությամբ նվագարկվում է առանձին <audio> element-ից,
+      // ուստի video element-ի audio track-ը պետք չէ։ Սա կանխում է
+      // կրկնակի ձայնը, և muted video-ի autoplay-ն ավելի քիչ է
+      // արգելափակվում browser-ների կողմից։
       remoteVideoRef.current.muted = true;
       remoteVideoRef.current.srcObject = stream;
       remoteVideoRef.current
@@ -181,6 +285,8 @@ export default function DirectChatWidget({ user }) {
 
   // Զանգի ավարտի cleanup — useCallback, որպեսզի stale closure չառաջանա
   const endCallCleanup = useCallback(async () => {
+    toneEngineRef.current?.stop();
+
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach((track) => track.stop());
       localStreamRef.current = null;
@@ -202,6 +308,7 @@ export default function DirectChatWidget({ user }) {
     remoteDescSetRef.current = false;
     remoteStreamRef.current = null;
     startingCallRef.current = false;
+    acceptingCallRef.current = false;
     setActiveCall(null);
     activeCallRef.current = null;
 
@@ -211,16 +318,6 @@ export default function DirectChatWidget({ user }) {
       console.error("Failed to clear own active_calls doc:", err);
     }
   }, [user?.uid]);
-
-  // --- WEBRTC ՕԳՆԱԿԱՆ ՖՈՒՆԿՑԻԱՆԵՐ ---
-  // callDocPath-ը միշտ zանգողի uid-ով document-ն է (active_calls/{calleeUid}),
-  // քանի որ startCall-ը հենց այնտեղ է գրում ringing/offer/answer info-ն։
-  function getSignalRoomId() {
-    // Signaling info-ն պահում ենք ինքը՝ active_calls collection-ի
-    // callee-ի document-ում, որպեսզի երկու կողմն էլ արդեն գիտեն այս
-    // path-ը (նույն document-ը, որով ուղարկվում է ringing/accepted)։
-    return activeCall?.callId;
-  }
 
   function createPeerConnection(roomId, isCaller) {
     const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
@@ -235,28 +332,17 @@ export default function DirectChatWidget({ user }) {
       }
     };
 
-    // ԿԱՐԵՎՈՐ ՈՒՂՂՈՒՄ. նախկինում ձայնը երբեմն չէր լսվում, քանի որ.
-    //   1) video զանգի ժամանակ <audio> element-ը ընդհանրապես render
-    //      չէր լինում DOM-ում (պայմանական rendering-ի պատճառով), և
-    //      remoteAudioRef.current-ը null էր՝ ուստի ոչինչ չէր ամրացվում,
-    //   2) նույնիսկ երբ srcObject-ը դրվում էր, browser-ը (հատկապես
-    //      Chrome/Safari) լռելյայն արգելափակում է media-ի autoplay-ը,
-    //      երբ դա տեղի է ունենում ասինխրոն event handler-ի ներսում,
-    //      եթե չկա explicit .play() կանչ։
-    // Այժմ pc.ontrack-ը պահում է stream-ը ref-ում և կանչում է
-    // attachRemoteStream()-ը, որը և՛ միշտ ամրացնում է audio element-ին
-    // (անկախ զանգի տեսակից), և՛ explicit .play() է անում։
-    // ԿԱՐԵՎՈՐ ՈՒՂՂՈՒՄ ("AbortError: play() interrupted by a new load
-    // request"). pc.ontrack-ը կրակում է ԱՌԱՆՁԻՆ յուրաքանչյուր track-ի
+    // ԿԱՐԵՎՈՐ. pc.ontrack-ը կրակում է ԱՌԱՆՁԻՆ յուրաքանչյուր track-ի
     // համար (մեկ անգամ՝ աուդիո track-ի, մեկ անգամ՝ video track-ի
     // համար)։ Որոշ browser-ներում event.streams[0]-ը այս երկու
-    // դեպքերում ՆՈՒՅՆ object reference-ը չէ, ուստի մեր հին կոդը
-    // srcObject-ը վերագրում էր երկրորդ անգամ, մինչ առաջին .play()-ը
-    // դեռ pending էր՝ ինչը հենց առաջացնում էր այս error-ը։
+    // դեպքերում ՆՈՒՅՆ object reference-ը չէ, ուստի srcObject-ը
+    // վերագրելը երկրորդ անգամ, մինչ առաջին .play()-ը դեռ pending է,
+    // կարող է play()-ի error առաջացնել կամ track-երից մեկը կորցնել։
     // Լուծումը. ստեղծում ենք ՄԵԿ մշտական MediaStream ինքներս և
     // ուղղակի ավելացնում ենք դրան ստացված track-երը մեկ-մեկ։ Այդպես
     // srcObject-ը video/audio element-ներին վերագրվում է ՄԻԱՅՆ ՄԵԿ
-    // ԱՆԳԱՄ, անկախ նրանից՝ քանի track-ի ontrack կկանչվի։
+    // ԱՆԳԱՄ, անկախ նրանից՝ քանի track-ի ontrack կկանչվի, և ոչ մի
+    // track չի կորչում։
     pc.ontrack = (event) => {
       if (!remoteStreamRef.current) {
         remoteStreamRef.current = new MediaStream();
@@ -366,12 +452,18 @@ export default function DirectChatWidget({ user }) {
         if (docSnap.exists()) {
           const callData = docSnap.data();
           if (callData && callData.status === "ringing") {
-            setActiveCall({
-              callId: user.uid,
-              callerName: callData.callerName,
-              callerUid: callData.callerUid,
-              type: callData.type,
-              isIncoming: true,
+            setActiveCall((prev) => {
+              // Չկրկնօրինակել, եթե արդեն ունենք ակտիվ incoming զանգ
+              if (prev && prev.isIncoming && prev.callId === user.uid) {
+                return prev;
+              }
+              return {
+                callId: user.uid,
+                callerName: callData.callerName,
+                callerUid: callData.callerUid,
+                type: callData.type,
+                isIncoming: true,
+              };
             });
           }
         } else {
@@ -388,23 +480,15 @@ export default function DirectChatWidget({ user }) {
 
   // Ելքային զանգի կարգավիճակի լսում (զանգողի կողմից)
   //
-  // ԿԱՐԵՎՈՐ ՈՒՂՂՈՒՄ. այս listener-ը սկսում է աշխատել անմիջապես, երբ
+  // ԿԱՐԵՎՈՐ. այս listener-ը սկսում է աշխատել անմիջապես, երբ
   // activeCall.callId-ը սահմանվում է (startCall()-ի սկզբում), ԲԱՅՑ
   // active_calls/{roomId} document-ն ինքը ստեղծվում է ԱՎԵԼԻ ՈՒՇ՝
   // getUserMedia()-ից և offer-ի ստեղծումից հետո։ Հետևաբար այս
   // listener-ի ԱՌԱՋԻՆ snapshot-ը գրեթե միշտ գալիս է "document-ը
   // գոյություն չունի" վիճակով, նույնիսկ եթե ամեն ինչ նորմալ է
-  // ընթանում։ Հին կոդը դա սխալմամբ մեկնաբանում էր որպես "մյուս
-  // կողմը մերժեց/կտրեց զանգը" և անմիջապես կանչում էր
-  // endCallCleanup()՝ ջնջելով զանգի modal-ը զանգողի էկրանից, մինչ
-  // իրական զանգը դեռ նոր էր սկսվում ֆոնում (և իրականում հասնում էր
-  // մյուս կողմին)։
-  //
-  // Լուծումը. հետևում ենք՝ արդյոք document-ն ԱՐԴԵՆ ՄԵԿ ԱՆԳԱՄ
-  // հաստատված է եղել գոյություն ունենալ (callDocConfirmedRef)։
-  // endCallCleanup()-ը կանչում ենք ՄԻԱՅՆ եթե document-ն ԱՌԱՋ
-  // գոյություն ուներ և հետո ջնջվեց (սա նշանակում է իրական
-  // մերժում/կտրում մյուս կողմից), ոչ թե պարզապես դեռ չի ստեղծվել։
+  // ընթանում. հետևում ենք՝ արդյոք document-ն ԱՐԴԵՆ ՄԵԿ ԱՆԳԱՄ հաստատված
+  // է եղել գոյություն ունենալ (callDocConfirmedRef), որպեսզի
+  // endCallCleanup()-ը կանչենք ՄԻԱՅՆ իրական մերժման/կտրման դեպքում։
   const callDocConfirmedRef = useRef(false);
 
   useEffect(() => {
@@ -441,8 +525,8 @@ export default function DirectChatWidget({ user }) {
           // մերժում/կտրում է մյուս կողմից
           endCallCleanup();
         }
-        // else. document-ը դեռ պարզապես չի ստեղծվել (սովորական
-        // սկզբնական վիճակ) — ոչինչ չենք անում, սպասում ենք
+        // else. document-ը դեռ պարզապես չի ստեղծվել — ոչինչ չենք
+        // անում, սպասում ենք
       },
       (err) => console.error("Outgoing call status listener error:", err)
     );
@@ -552,7 +636,11 @@ export default function DirectChatWidget({ user }) {
   // --- ԶԱՆԳԻ ՍԿՍՈՒՄ (WebRTC offer ուղարկելով) ---
   async function startCall(type) {
     if (!activePartner || activePartner.isGroup) return;
-    if (startingCallRef.current || activeCall) return;
+    // ԿԱՐԵՎՈՐ. pcRef.current-ի ստուգումն էլ ավելացվեց, որպեսզի
+    // երբեք չստեղծվի երկրորդ RTCPeerConnection, քանի դեռ առաջինը
+    // դեռ բաց է. հենց սա էր ասիմետրիկ ձայնի/video-ի հիմնական
+    // պատճառը։
+    if (startingCallRef.current || activeCall || pcRef.current) return;
     startingCallRef.current = true;
 
     const partnerName = activePartner.name || "Զրուցակից";
@@ -575,7 +663,16 @@ export default function DirectChatWidget({ user }) {
 
       const pc = createPeerConnection(roomId, true);
       pcRef.current = pc;
-      stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+
+      // Track-երն ավելացնում ենք ՆՈՒՅՆ, կանխատեսելի հերթականությամբ
+      // (նախ audio, հետո video, եթե կա) — սա պետք է համընկնի
+      // callee-ի կողմում ավելացվող հերթականության հետ, հակառակ
+      // դեպքում m-line-երը mismatch կլինեն և մի ուղղությամբ media-ն
+      // կկորչի։
+      stream
+        .getTracks()
+        .sort((a, b) => (a.kind === "audio" ? -1 : 1))
+        .forEach((track) => pc.addTrack(track, stream));
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
@@ -600,6 +697,14 @@ export default function DirectChatWidget({ user }) {
 
   // --- ԶԱՆԳԻ ԸՆԴՈՒՆՈՒՄ (WebRTC answer ուղարկելով) ---
   async function acceptCall() {
+    // ԿԱՐԵՎՈՐ. կանխում ենք կրկնակի acceptCall կանչ (օր. կրկնակի
+    // սեղմում կոճակին, կամ StrictMode-ի կրկնակի invoke), որը
+    // կստեղծեր երկրորդ RTCPeerConnection/getUserMedia stream, մինչ
+    // առաջինն արդեն ընթացքի մեջ է. սա էլ էր ասիմետրիկ ձայնի/video-ի
+    // պատճառներից մեկը։
+    if (acceptingCallRef.current || pcRef.current) return;
+    acceptingCallRef.current = true;
+
     const roomId = activeCall.callId; // սեփական uid-ը (callee)
     try {
       const constraints = { audio: true, video: activeCall.type === "video" };
@@ -615,7 +720,15 @@ export default function DirectChatWidget({ user }) {
 
       const pc = createPeerConnection(roomId, false);
       pcRef.current = pc;
-      stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+
+      // ՆՈՒՅՆ հերթականությունը (audio, հետո video) ինչ caller-ի
+      // կողմում՝ ինչպես startCall()-ում։ Ավելացնում ենք track-երը
+      // ՆԱԽՔԱՆ remote description-ը սահմանելը, որպեսզի Answer-ը
+      // ստեղծվի local track-երն արդեն pc-ին կցված վիճակում։
+      stream
+        .getTracks()
+        .sort((a, b) => (a.kind === "audio" ? -1 : 1))
+        .forEach((track) => pc.addTrack(track, stream));
 
       await pc.setRemoteDescription(new RTCSessionDescription(callData.offer));
       remoteDescSetRef.current = true;
@@ -638,10 +751,14 @@ export default function DirectChatWidget({ user }) {
     } catch (err) {
       console.error("Accept call error:", err);
       endCallCleanup();
+    } finally {
+      acceptingCallRef.current = false;
     }
   }
 
   async function hangUp() {
+    toneEngineRef.current?.stop();
+
     const myUid = user?.uid;
     const otherUid = activeCall?.callerUid || activePartner?.uid;
     const roomId = activeCall?.callId;
@@ -667,6 +784,7 @@ export default function DirectChatWidget({ user }) {
     remoteDescSetRef.current = false;
     remoteStreamRef.current = null;
     startingCallRef.current = false;
+    acceptingCallRef.current = false;
     setActiveCall(null);
     activeCallRef.current = null;
 
@@ -945,15 +1063,11 @@ export default function DirectChatWidget({ user }) {
               )}
 
               {/*
-                ԿԱՐԵՎՈՐ ՈՒՂՂՈՒՄ. այս <audio> element-ը այժմ ՄԻՇՏ render է
-                լինում՝ անկախ զանգի տեսակից (video/audio)։ Նախկինում այն
-                render էր միայն "audio" տեսակի զանգերի ժամանակ, ինչի
-                պատճառով video զանգերում remoteAudioRef.current-ը null
-                էր, և pc.ontrack-ը ոչինչ չէր կարողանում ամրացնել այնտեղ։
-                Video element-ի ինքնուրույն autoplay-ն էլ browser-ների
-                կողմից հաճախ արգելափակվում է, ուստի այս hidden <audio>
-                element-ը ծառայում է որպես հուսալի fallback՝ ձայնի
-                նվագարկման համար բոլոր դեպքերում։
+                Այս <audio> element-ը ՄԻՇՏ render է լինում՝ անկախ
+                զանգի տեսակից (video/audio), որպեսզի pc.ontrack-ը
+                միշտ ունենա վավեր target՝ remote ձայնը նվագարկելու
+                համար, նույնիսկ եթե video element-ի autoplay-ը
+                արգելափակված է browser-ի կողմից։
               */}
               <audio
                 ref={remoteAudioRef}
