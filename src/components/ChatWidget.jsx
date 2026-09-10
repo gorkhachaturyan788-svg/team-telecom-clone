@@ -247,28 +247,33 @@ export default function DirectChatWidget({ user }) {
   // srcObject սահմանելը հաճախ բավարար չէ. պետք է նաև explicit
   // .play() կանչել։
   const attachRemoteStream = useCallback(() => {
-    const stream = remoteStreamRef.current;
-    if (!stream) return;
+    const streams = remoteStreamRef.current;
+    if (!streams) return;
 
-    if (remoteAudioRef.current && remoteAudioRef.current.srcObject !== stream) {
-      remoteAudioRef.current.srcObject = stream;
+    // Աուդիո track-երը ՄԻՇՏ գնում են <audio> element-ին, անկախ զանգի
+    // տեսակից (audio կամ video)։
+    if (
+      remoteAudioRef.current &&
+      remoteAudioRef.current.srcObject !== streams.audio
+    ) {
+      remoteAudioRef.current.srcObject = streams.audio;
       remoteAudioRef.current
         .play()
         .catch((err) => console.error("remoteAudio play() failed:", err));
     }
 
+    // Video track-երը գնում են <video> element-ին՝ ԱՌԱՆՁԻՆ
+    // MediaStream-ով, որը երբեք չունի audio track։ Video element-ը
+    // muted է, քանի որ ձայնն արդեն ամբողջությամբ նվագարկվում է
+    // վերևի <audio> element-ից. սա կանխում է կրկնակի աղբյուրից
+    // եկող distortion/echo-ն։
     if (
       activeCallRef.current?.type === "video" &&
       remoteVideoRef.current &&
-      remoteVideoRef.current.srcObject !== stream
+      remoteVideoRef.current.srcObject !== streams.video
     ) {
-      // ԿԱՐԵՎՈՐ. remote video-ն դիտավորյալ muted ենք պահում։ Ձայնը
-      // արդեն ամբողջությամբ նվագարկվում է առանձին <audio> element-ից,
-      // ուստի video element-ի audio track-ը պետք չէ։ Սա կանխում է
-      // կրկնակի ձայնը, և muted video-ի autoplay-ն ավելի քիչ է
-      // արգելափակվում browser-ների կողմից։
       remoteVideoRef.current.muted = true;
-      remoteVideoRef.current.srcObject = stream;
+      remoteVideoRef.current.srcObject = streams.video;
       remoteVideoRef.current
         .play()
         .catch((err) => console.error("remoteVideo play() failed:", err));
@@ -343,12 +348,38 @@ export default function DirectChatWidget({ user }) {
     // srcObject-ը video/audio element-ներին վերագրվում է ՄԻԱՅՆ ՄԵԿ
     // ԱՆԳԱՄ, անկախ նրանից՝ քանի track-ի ontrack կկանչվի, և ոչ մի
     // track չի կորչում։
+    // ԿԱՐԵՎՈՐ ՈՒՂՂՈՒՄ ("խնգնխնգոց"/distortion ձայնի փոխարեն մարդու
+    // ձայնի). նախկինում մեկ ընդհանուր MediaStream էինք օգտագործում
+    // և՛ <audio>, և՛ <video> element-ների համար։ Video track-ը
+    // ավելացնելիս video element-ը կարող էր կարճ պահով ստանալ նաև
+    // audio track-ը (նույն stream reference-ի պատճառով), ինչը
+    // create-ում էր ԵՐԿՈՒ ԱՐՏԱԾՄԱՆ ԿԵՏ նույն audio track-ի համար
+    // (audio element + video element), ինչը browser/echo-cancellation
+    // մակարդակում խեղաթյուրում/distortion/"ծնգծնգոց" էր առաջացնում,
+    // հատկապես speaker-ից speaker feedback-ի պատճառով։
+    //
+    // Լուծումը. ունենում ենք ԵՐԿՈՒ առանձին MediaStream object.
+    // մեկը՝ միայն աուդիո track-երի համար (միշտ գնում է <audio>
+    // element-ին), մյուսը՝ միայն video track-երի համար (գնում է
+    // <video> element-ին, միշտ muted, քանի որ ձայնն արդեն նվագարկվում
+    // է առանձին)։ Այս երկուսը երբեք չեն կիսում track reference-ներ։
+    if (!remoteStreamRef.current) {
+      remoteStreamRef.current = {
+        audio: new MediaStream(),
+        video: new MediaStream(),
+      };
+    }
+
     pc.ontrack = (event) => {
-      if (!remoteStreamRef.current) {
-        remoteStreamRef.current = new MediaStream();
-      }
-      if (!remoteStreamRef.current.getTracks().includes(event.track)) {
-        remoteStreamRef.current.addTrack(event.track);
+      const streams = remoteStreamRef.current;
+      if (event.track.kind === "audio") {
+        if (!streams.audio.getTracks().includes(event.track)) {
+          streams.audio.addTrack(event.track);
+        }
+      } else if (event.track.kind === "video") {
+        if (!streams.video.getTracks().includes(event.track)) {
+          streams.video.addTrack(event.track);
+        }
       }
       attachRemoteStream();
     };
