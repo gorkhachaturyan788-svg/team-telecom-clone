@@ -11,6 +11,9 @@ import TariffsFixed from "./pages/TariffsFixed";
 import ChatWidget from "./components/ChatWidget";
 import Cart from "./components/Cart";
 
+import LiveMapModal from "./components/LiveMapModal";
+import LiveMapPage from "./pages/LiveMapPage";
+
 import Home from "./pages/Home";
 import Eshop from "./pages/Eshop";
 import EshopTerms from "./components/EshopTerms";
@@ -26,7 +29,7 @@ import TeamTV from "./pages/TeamTV";
 import MyTeam from "./pages/MyTeam";
 import TeamPay from "./pages/TeamPay";
 import TeamEnergy from "./pages/TeamEnergy";
-import Profil from "./components/profil"; 
+import Profil from "./components/profil";
 import AboutUS from "./components/AboutUS";
 import Museum from "./components/Museum";
 import News from "./components/News";
@@ -79,6 +82,8 @@ function Layout() {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
 
+  const [isMapOpen, setIsMapOpen] = useState(false);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
@@ -90,11 +95,11 @@ function Layout() {
   return (
     <>
       <ScrollToTop />
-      <Header />
+      <Header onOpenMap={() => setIsMapOpen(true)} />
 
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/cart" element={<Cart />} /> 
+        <Route path="/cart" element={<Cart />} />
         <Route path="/business" element={<Business />} />
         <Route path="/eshop" element={<Eshop />} />
         <Route path="/eshop-terms" element={<EshopTerms />} />
@@ -108,6 +113,8 @@ function Layout() {
         <Route path="/account" element={<Profil user={user} />} />
         <Route path="/login" element={<Login />} />
         <Route path="/subscription" element={<Hetevel />} />
+
+        <Route path="/live-map" element={<LiveMapPage />} />
 
         <Route path="/about" element={<AboutUS />} />
         <Route path="/museum" element={<Museum />} />
@@ -203,6 +210,8 @@ function Layout() {
         <Route path="/team-energy" element={<TeamEnergy />} />
         <Route path="/payment" element={<BillPaymentForm />} />
       </Routes>
+
+      <LiveMapModal isOpen={isMapOpen} onClose={() => setIsMapOpen(false)} />
 
       {!hideLayout && <Footer />}
       {!hideLayout && !authLoading && <ChatWidget user={user} />}
