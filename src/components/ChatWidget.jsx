@@ -705,6 +705,19 @@ export default function DirectChatWidget({ user }) {
     if (acceptingCallRef.current || pcRef.current) return;
     acceptingCallRef.current = true;
 
+    // ԿԱՐԵՎՈՐ. ringtone-ը կանգնեցնում ենք ՀԵՆՑ ԱՅՍՏԵՂ, սինխրոն կերպով,
+    // անմիջապես երբ օգտատերը սեղմում է Accept կոճակը։ Մենք չենք
+    // սպասում activeCall.connected state-ի փոփոխությանը (որը տեղի է
+    // ունենում մի քանի տող ներքև, setActiveCall-ով) և դրանից բխող
+    // useEffect-ի վերագործարկմանը, քանի որ React-ի state update-ը և
+    // հաջորդ effect-ի աշխատանքը ասինխրոն են ու կարող են մի քանի
+    // render-ցիկլ տևել, մինչդեռ ստորև getUserMedia/WebRTC handshake-ը
+    // արդեն սկսում է աշխատել։ Առանց այս ուղիղ կանչի, ringtone-ը
+    // շարունակում էր հնչել Accept սեղմելուց հետո՝ մինչև connected
+    // state-ը վերջապես reconcile-վեր, ինչը հաճախ նկատելիորեն ուշացած
+    // էր օգտատիրոջ համար։
+    toneEngineRef.current?.stop();
+
     const roomId = activeCall.callId; // սեփական uid-ը (callee)
     try {
       const constraints = { audio: true, video: activeCall.type === "video" };
