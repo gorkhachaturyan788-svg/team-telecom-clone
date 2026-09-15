@@ -246,38 +246,41 @@ export default function DirectChatWidget({ user }) {
   // autoplay-ը, եթե srcObject-ը դրվում է ասինխրոն, ուստի պարզապես
   // srcObject սահմանելը հաճախ բավարար չէ. պետք է նաև explicit
   // .play() կանչել։
+  //
+  // ԹԱՐՄԱՑՈՒՄ. tryAttachAudio/tryAttachVideo-ն այժմ բաժանված են
+  // առանձին ֆունկցիաների և ամեն մեկն ինքնուրույն ստուգում է իր
+  // element-ի առկայությունը՝ առանց մյուսից կախված լինելու։ Եթե
+  // element-ը դեռ null է (դեռ render չի եղել DOM-ում), ուղղակի
+  // լուռ ելքում ենք, փոխարենը հենվելով ստորև ավելացված retry
+  // interval-ի վրա, որը նորից կկանչի attachRemoteStream()-ը մինչև
+  // element-երը հասանելի դառնան։ play() error-ները միշտ լուռ
+  // կուլ ենք տալիս (.catch(() => {})), որպեսզի abort-ից բխող
+  // մրցակցող (race) error-ները չընդհատեն հաջորդ փորձերը։
   const attachRemoteStream = useCallback(() => {
     const streams = remoteStreamRef.current;
     if (!streams) return;
 
-    // Աուդիո track-երը ՄԻՇՏ գնում են <audio> element-ին, անկախ զանգի
-    // տեսակից (audio կամ video)։
-    if (
-      remoteAudioRef.current &&
-      remoteAudioRef.current.srcObject !== streams.audio
-    ) {
-      remoteAudioRef.current.srcObject = streams.audio;
-      remoteAudioRef.current
-        .play()
-        .catch((err) => console.error("remoteAudio play() failed:", err));
-    }
+    const tryAttachAudio = () => {
+      const el = remoteAudioRef.current;
+      if (!el) return;
+      if (el.srcObject !== streams.audio) {
+        el.srcObject = streams.audio;
+      }
+      el.play().catch(() => {});
+    };
 
-    // Video track-երը գնում են <video> element-ին՝ ԱՌԱՆՁԻՆ
-    // MediaStream-ով, որը երբեք չունի audio track։ Video element-ը
-    // muted է, քանի որ ձայնն արդեն ամբողջությամբ նվագարկվում է
-    // վերևի <audio> element-ից. սա կանխում է կրկնակի աղբյուրից
-    // եկող distortion/echo-ն։
-    if (
-      activeCallRef.current?.type === "video" &&
-      remoteVideoRef.current &&
-      remoteVideoRef.current.srcObject !== streams.video
-    ) {
-      remoteVideoRef.current.muted = true;
-      remoteVideoRef.current.srcObject = streams.video;
-      remoteVideoRef.current
-        .play()
-        .catch((err) => console.error("remoteVideo play() failed:", err));
-    }
+    const tryAttachVideo = () => {
+      const el = remoteVideoRef.current;
+      if (!el || activeCallRef.current?.type !== "video") return;
+      el.muted = true;
+      if (el.srcObject !== streams.video) {
+        el.srcObject = streams.video;
+      }
+      el.play().catch(() => {});
+    };
+
+    tryAttachAudio();
+    tryAttachVideo();
   }, []);
 
   // Երբ activeCall-ը փոփոխվում է (օր. incoming -> accepted, կամ
@@ -287,6 +290,20 @@ export default function DirectChatWidget({ user }) {
   useEffect(() => {
     attachRemoteStream();
   }, [activeCall?.connected, activeCall?.type, activeCall?.isIncoming, attachRemoteStream]);
+
+  // ԿԱՐԵՎՈՐ (նոր). retry-ով useEffect, որը կանգնեցնում է race
+  // condition-ը pc.ontrack-ի և <audio>/<video> element-երի DOM
+  // render-ի միջև։ Քանի դեռ զանգը connected է, ամեն 500ms-ը մեկ
+  // նորից փորձում ենք attach անել remote stream-ը՝ անկախ նրանից,
+  // թե ontrack-ը կրակել է element-ների mount-ից առաջ, թե հետո։
+  // attachRemoteStream()-ն ինքնին idempotent է (ստուգում է
+  // srcObject-ը արդեն նույնն է, թե ոչ), ուստի կրկնվող կանչերը
+  // անվնաս են։
+  useEffect(() => {
+    if (!activeCall?.connected) return;
+    const id = setInterval(attachRemoteStream, 500);
+    return () => clearInterval(id);
+  }, [activeCall?.connected, attachRemoteStream]);
 
   // Զանգի ավարտի cleanup — useCallback, որպեսզի stale closure չառաջանա
   const endCallCleanup = useCallback(async () => {
@@ -381,7 +398,14 @@ export default function DirectChatWidget({ user }) {
           streams.video.addTrack(event.track);
         }
       }
-      attachRemoteStream();
+      // ԿԱՐԵՎՈՐ (ուղղում). attachRemoteStream()-ը ուղիղ կանչելու
+      // փոխարեն օգտագործում ենք setTimeout(..., 0), որպեսզի
+      // React-ը հասցնի reconcile անել DOM-ը (օր. <video> element-ը
+      // mount անել activeCall.type === "video" պայմանով render-ից
+      // հետո), նախքան attach-ի փորձը։ Առանց սրա, ontrack-ը հաճախ
+      // կրակում էր ավելի վաղ, քան element-ը գոյություն ուներ
+      // DOM-ում, ինչի հետևանքով stream-ը երբեք չէր կցվում։
+      setTimeout(attachRemoteStream, 0);
     };
 
     pc.onconnectionstatechange = () => {
