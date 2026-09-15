@@ -1,14 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { X, Navigation } from "lucide-react";
 import L from "leaflet";
 
-// Ներմուծում ենք firestore-ը ձեր firebase.js-ից (կամ կարգավորեք ըստ ձեր ֆայլի)
 import { db, auth } from "../firebase"; 
 import { collection, doc, setDoc, onSnapshot, serverTimestamp } from "firebase/firestore";
 
-// Ուղղում ենք Leaflet-ի ստանդարտ մարկերի նկարի խնդիրը React-ում
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
@@ -20,10 +18,22 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+// Օժանդակ կոմպոնենտ, որը կառավարում է քարտեզի կենտրոնը, երբ դիրքը փոխվում է
+function MapRecenter({ center }) {
+  const map = useMap();
+  useEffect(() => {
+    if (center) {
+      map.setView(center, map.getZoom(), { animate: true });
+    }
+  }, [center, map]);
+  return null;
+}
+
 export default function LiveMapModal({ isOpen, onClose }) {
   const [usersLocations, setUsersLocations] = useState([]);
-  const [myCoords, setMyCoords] = useState([40.1792, 44.4991]); // Երևանի կենտրոնը որպես սկզբնական
+  const [myCoords, setMyCoords] = useState([40.1792, 44.4991]); // Երևանի կենտրոնը՝ որպես սկզբնական
   const [isSharing, setIsSharing] = useState(false);
+  const [shouldFollow, setShouldFollow] = useState(true); // Քարտեզը հետևի՞ մեր շարժմանը
 
   // 1. Հետևում ենք մեր GPS դիրքին և ուղարկում Firebase
   useEffect(() => {
@@ -37,20 +47,24 @@ export default function LiveMapModal({ isOpen, onClose }) {
           const newCoords = [latitude, longitude];
           setMyCoords(newCoords);
 
-          // Եթե օգտատերը միացրել է կիսվելու կոճակը, թարմացնում ենք բազայում
-          const userId = auth.currentUser ? auth.currentUser.uid : "guest_" + Math.random().toString(36).substring(7);
-          
+          // Ուղարկում ենք բազա միայն այն դեպքում, երբ միացված է կիսվելու կոճակը
           if (isSharing) {
+            const userId = auth.currentUser ? auth.currentUser.uid : "guest_" + localStorage.getItem("guest_id") || (() => {
+              const newId = "guest_" + Math.random().toString(36).substring(7);
+              localStorage.setItem("guest_id", newId);
+              return newId;
+            })();
+
             setDoc(doc(db, "live_locations", userId), {
               lat: latitude,
               lng: longitude,
               email: auth.currentUser ? auth.currentUser.email : "Հյուր",
               updatedAt: serverTimestamp(),
-            }).catch((err) => console.error("Firebase error:", err));
+            }, { merge: true }).catch((err) => console.error("Firebase error:", err));
           }
         },
         (error) => console.error("GPS Error:", error),
-        { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
+        { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
       );
     }
 
@@ -65,8 +79,8 @@ export default function LiveMapModal({ isOpen, onClose }) {
 
     const unsubscribe = onSnapshot(collection(db, "live_locations"), (snapshot) => {
       const locations = [];
-      snapshot.forEach((doc) => {
-        locations.push({ id: doc.id, ...doc.data() });
+      snapshot.forEach((docSnap) => {
+        locations.push({ id: docSnap.id, ...docSnap.data() });
       });
       setUsersLocations(locations);
     });
@@ -77,8 +91,8 @@ export default function LiveMapModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-white w-full max-w-4xl h-[80vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col relative animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 backdrop-blur-sm p-4">
+      <div className="bg-white w-full max-w-4xl h-[85vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col relative">
         
         {/* Վերնագիր */}
         <div className="bg-[#003853] text-white px-6 py-4 flex items-center justify-between">
@@ -87,12 +101,12 @@ export default function LiveMapModal({ isOpen, onClose }) {
             <h2 className="text-lg font-bold">Կենդանի Քարտեզ (Live Map)</h2>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => setIsSharing(!isSharing)}
               className={`px-4 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
                 isSharing 
-                  ? "bg-green-500 text-white animate-pulse" 
+                  ? "bg-green-500 text-white animate-pulse shadow-md" 
                   : "bg-gray-200 text-gray-700 hover:bg-gray-300"
               }`}
             >
@@ -113,22 +127,29 @@ export default function LiveMapModal({ isOpen, onClose }) {
         <div className="flex-1 w-full relative z-0">
           <MapContainer 
             center={myCoords} 
-            zoom={13} 
+            zoom={14} 
             scrollWheelZoom={true} 
             style={{ width: "100%", height: "100%" }}
+            // Եթե օգտատերը շարժվում է քարտեզի վրա ձեռքով, կարող ենք անջատել ավտո-կենտրոնացումը, 
+            // բայց այս պարագայում օգտագործում ենք MapRecenter-ը, երբ shouldFollow-ը true է
           >
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
 
-            {/* Ցուցադրում ենք բոլոր միացված օգտատերերին */}
+            {/* Ավտոմատ կենտրոնացում, երբ դիրքը փոխվում է (օր.՝ Աշտարակ գնալիս) */}
+            {shouldFollow && <MapRecenter center={myCoords} />}
+
+            {/* Ցուցադրում ենք բոլոր օգտատերերին */}
             {usersLocations.map((userLoc) => (
               <Marker key={userLoc.id} position={[userLoc.lat, userLoc.lng]}>
                 <Popup>
                   <div className="text-sm font-semibold text-gray-800">
                     <p>👤 Օգտատեր: {userLoc.email || "Անհայտ"}</p>
-                    <p className="text-xs text-gray-500">Վերջին թարմացումը՝ Հիմա</p>
+                    <p className="text-xs text-gray-500">
+                      Կոորդինատներ՝ {userLoc.lat.toFixed(4)}, {userLoc.lng.toFixed(4)}
+                    </p>
                   </div>
                 </Popup>
               </Marker>
@@ -137,9 +158,11 @@ export default function LiveMapModal({ isOpen, onClose }) {
         </div>
 
         {/* Ներքևի տեղեկատվական վահանակ */}
-        <div className="bg-gray-50 px-6 py-3 border-t border-gray-200 text-xs text-gray-600 flex justify-between items-center">
+        <div className="bg-gray-50 px-6 py-3 border-t border-gray-200 text-xs text-gray-600 flex flex-wrap justify-between items-center gap-2">
           <span>Ակտիվ օգտատերեր քարտեզում: <b>{usersLocations.length}</b></span>
-          <span>Սեղմեք «Միացնել իմ դիրքը» կոճակը, որպեսզի մյուսները նույնպես տեսնեն ձեզ։</span>
+          <span className="text-gray-500">
+            {isSharing ? "🚀 Ձեր դիրքը թարմացվում է իրական ժամանակում (օր.՝ Աշտարակում կամ այլ վայրում լինելիս):" : "Սեղմեք «Միացնել իմ դիրքը»՝ սկսելու համար։"}
+          </span>
         </div>
 
       </div>
